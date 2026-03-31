@@ -97,8 +97,10 @@ const LandingPage = () => {
                         variants={fadeIn}
                     >
                         <div className="feature-icon">📊</div>
-                        <h3>Clear Dashboard</h3>
-                        <p>See exactly how much you've lent out and what you've borrowed at a single glance with beautiful visual charts.</p>
+                        <div className="feature-content">
+                            <h3>Clear Dashboard</h3>
+                            <p>Track loans and repayments at a single glance with intuitive visual charts.</p>
+                        </div>
                     </motion.div>
 
                     <motion.div
@@ -109,8 +111,10 @@ const LandingPage = () => {
                         variants={fadeIn}
                     >
                         <div className="feature-icon">🛡️</div>
-                        <h3>Trust Score System</h3>
-                        <p>Build your reputation! On-time payments increase your Trust Score, bringing gamification to personal finance.</p>
+                        <div className="feature-content">
+                            <h3>Trust Score System</h3>
+                            <p>Build your reputation with on-time payments and gamified finance features.</p>
+                        </div>
                     </motion.div>
 
                     <motion.div
@@ -121,8 +125,10 @@ const LandingPage = () => {
                         variants={fadeIn}
                     >
                         <div className="feature-icon">⏰</div>
-                        <h3>Smart Reminders</h3>
-                        <p>Never send an awkward 'Hey, about that money...' text again. FinTrust sends automated, polite reminders.</p>
+                        <div className="feature-content">
+                            <h3>Smart Reminders</h3>
+                            <p>Automated, polite notifications that take the awkwardness out of repayment.</p>
+                        </div>
                     </motion.div>
 
                     <motion.div
@@ -133,8 +139,10 @@ const LandingPage = () => {
                         variants={fadeIn}
                     >
                         <div className="feature-icon">🌍</div>
-                        <h3>Multi-Currency</h3>
-                        <p>Lending abroad? Track loans in multiple currencies with auto-calculated exchange rates and conversion fees.</p>
+                        <div className="feature-content">
+                            <h3>Multi-Currency</h3>
+                            <p>Manage international loans with auto-calculated exchange rates and conversion tracking.</p>
+                        </div>
                     </motion.div>
                 </div>
             </section>
@@ -147,21 +155,27 @@ const LandingPage = () => {
 
                 <div className="steps-container">
                     <div className="step">
-                        <div className="step-number">1</div>
-                        <h3>Create a Loan</h3>
-                        <p>Add the lender, borrower, amount, and due date. It takes less than 30 seconds.</p>
+                        <div className="step-number">🤝</div>
+                        <div className="step-content">
+                            <h3>Create a Loan</h3>
+                            <p>Add the lender, borrower, amount, and due date. It takes less than 30 seconds.</p>
+                        </div>
                     </div>
                     <div className="step-connector"></div>
                     <div className="step">
-                        <div className="step-number">2</div>
-                        <h3>Track Repayments</h3>
-                        <p>Log partial or full payments. Both parties see the updated remaining balance.</p>
+                        <div className="step-number">💳</div>
+                        <div className="step-content">
+                            <h3>Track Repayments</h3>
+                            <p>Log partial or full payments. Both parties see the updated remaining balance.</p>
+                        </div>
                     </div>
                     <div className="step-connector"></div>
                     <div className="step">
-                        <div className="step-number">3</div>
-                        <h3>Earn Badges</h3>
-                        <p>Complete loans successfully to earn badges, level up, and boost your Trust Score.</p>
+                        <div className="step-number">💎</div>
+                        <div className="step-content">
+                            <h3>Earn Badges</h3>
+                            <p>Complete loans successfully to earn badges, level up, and boost your Trust Score.</p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -181,7 +195,7 @@ const LandingPage = () => {
                     <div className="footer-brand">
                         <div className="logo-container">
                             <div className="logo-icon small">🤝</div>
-                            <span className="logo-text">FinTrust</span>
+                            <span className="logo-text gradient-text">FinTrust</span>
                         </div>
                         <p>Building trust in personal finance.</p>
                     </div>

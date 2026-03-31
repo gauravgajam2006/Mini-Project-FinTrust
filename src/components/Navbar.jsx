@@ -12,9 +12,18 @@ const Navbar = () => {
     const navigate = useNavigate();
     const [showReminders, setShowReminders] = useState(false);
 
-    const handleLogout = () => {
-        logout();
-        navigate('/');
+    const handleLogout = async (e) => {
+        e.stopPropagation(); // Prevent the parent click event (profile)
+        try {
+            await logout();
+            navigate('/');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
+
+    const handleProfileClick = () => {
+        navigate('/profile');
     };
 
     // Calculate active reminders count
@@ -51,14 +60,23 @@ const Navbar = () => {
                     onClose={() => setShowReminders(false)}
                 />
 
-                <div className="navbar-profile" onClick={handleLogout} title="Logout">
-                    <div className="navbar-avatar">
-                        {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                <div className="navbar-profile-wrapper">
+                    <div className="navbar-profile" onClick={handleProfileClick} title="View Profile">
+                        <div className="navbar-avatar">
+                            {user?.name?.charAt(0) || user?.email?.charAt(0) || 'U'}
+                        </div>
+                        <div className="navbar-user-info">
+                            <div className="navbar-user-name">{user?.name || user?.email || 'User'}</div>
+                            <div className="navbar-user-email">{user?.email || ''}</div>
+                        </div>
                     </div>
-                    <div className="navbar-user-info">
-                        <div className="navbar-user-name">{user?.name || user?.email || 'User'}</div>
-                        <div className="navbar-user-email">{user?.email || ''}</div>
-                    </div>
+                    <button className="navbar-logout-btn" onClick={handleLogout} title="Sign Out">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                            <polyline points="16 17 21 12 16 7"></polyline>
+                            <line x1="21" y1="12" x2="9" y2="12"></line>
+                        </svg>
+                    </button>
                 </div>
             </div>
         </nav>
