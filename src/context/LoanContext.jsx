@@ -538,14 +538,22 @@ export const LoanProvider = ({ children }) => {
         const overdueLoans = loans.filter(l => l.status === 'overdue');
         const completedLoans = loans.filter(l => l.status === 'completed');
 
+        const lentOutstanding = activeLent.reduce((sum, l) => sum + (l.amount - l.amountPaid), 0);
+        const borrowedOutstanding = activeBorrowed.reduce((sum, l) => sum + (l.amount - l.amountPaid), 0);
+
+        // Aggregate payments
+        const allPayments = loans.flatMap(l => l.payments || []);
+        const totalPaymentsAmount = allPayments.reduce((sum, p) => sum + p.amount, 0);
+
         return {
             overview: {
                 totalLent: lent.reduce((sum, l) => sum + l.amount, 0),
                 totalBorrowed: borrowed.reduce((sum, l) => sum + l.amount, 0),
                 totalLentPaid: lent.reduce((sum, l) => sum + l.amountPaid, 0),
                 totalBorrowedPaid: borrowed.reduce((sum, l) => sum + l.amountPaid, 0),
-                lentOutstanding: activeLent.reduce((sum, l) => sum + (l.amount - l.amountPaid), 0),
-                borrowedOutstanding: activeBorrowed.reduce((sum, l) => sum + (l.amount - l.amountPaid), 0),
+                lentOutstanding,
+                borrowedOutstanding,
+                netPosition: lentOutstanding - borrowedOutstanding,
                 activeLoans: activeLent.length + activeBorrowed.length,
                 overdueLoans: overdueLoans.length,
                 completedLoans: completedLoans.length
@@ -557,8 +565,26 @@ export const LoanProvider = ({ children }) => {
             borrowing: {
                 activeCount: activeBorrowed.length,
                 totalAmount: borrowed.reduce((sum, l) => sum + l.amount, 0)
+            },
+            payments: {
+                totalCount: allPayments.length,
+                totalAmount: totalPaymentsAmount,
+                averageAmount: allPayments.length > 0 ? totalPaymentsAmount / allPayments.length : 0
             }
         };
+    };
+
+    const getTotalAmountOwed = () => {
+        const borrowed = loans.filter(l => l.type === 'borrowed' && l.status === 'active');
+        return borrowed.reduce((sum, l) => sum + (l.amount - l.amountPaid), 0);
+    };
+
+    const getPendingLoans = () => {
+        return loans.filter(l => l.status === 'pending_approval' || l.status === 'active');
+    };
+
+    const getOverdueLoans = () => {
+        return loans.filter(l => l.status === 'overdue');
     };
 
     return (
@@ -566,7 +592,8 @@ export const LoanProvider = ({ children }) => {
             loans, user, loading, isAuthenticated, activities, gamification,
             fetchLoans, fetchActivities, createLoan, updateLoan, deleteLoan,
             login, signup, logout, loginWithGoogle, addRepayment, getDashboardStats,
-            getLoanDetails, getLoansByUser, getRepaymentsByLoan, calculateOutstandingAmount
+            getLoanDetails, getLoansByUser, getRepaymentsByLoan, calculateOutstandingAmount,
+            getTotalAmountOwed, getPendingLoans, getOverdueLoans
         }}>
             {children}
         </LoanContext.Provider>
