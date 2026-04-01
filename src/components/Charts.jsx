@@ -31,60 +31,94 @@ ChartJS.register(
 );
 
 // Theme-aware chart configuration
-const getChartOptions = (title, isDarkTheme) => ({
+const getChartOptions = (title, isDarkTheme, chartType = '') => ({
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+        padding: {
+            top: 10,
+            bottom: 10
+        }
+    },
     plugins: {
         legend: {
             position: 'bottom',
             labels: {
-                color: isDarkTheme ? '#FFFFFF' : '#000000',
-                padding: 15,
+                color: isDarkTheme ? '#e2e8f0' : '#495057',
+                padding: 20,
+                usePointStyle: true,
+                pointStyle: 'circle',
                 font: {
-                    size: 12,
-                    family: 'Inter'
+                    size: 13,
+                    family: 'Inter',
+                    weight: '500'
                 }
             }
         },
         title: {
-            display: true,
+            display: !!title,
             text: title,
-            color: isDarkTheme ? '#FFFFFF' : '#000000',
+            color: isDarkTheme ? '#FFFFFF' : '#1e293b',
             font: {
-                size: 16,
-                weight: 'bold',
+                size: 18,
+                weight: '700',
                 family: 'Poppins'
             },
-            padding: 20
+            padding: {
+                bottom: 30
+            }
         },
         tooltip: {
-            backgroundColor: isDarkTheme ? '#1A1A1A' : '#FFFFFF',
-            titleColor: isDarkTheme ? '#FFFFFF' : '#000000',
-            bodyColor: isDarkTheme ? '#E0E0E0' : '#495057',
-            borderColor: isDarkTheme ? '#00D9FF' : '#DEE2E6',
+            backgroundColor: isDarkTheme ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+            titleColor: isDarkTheme ? '#FFFFFF' : '#1e293b',
+            bodyColor: isDarkTheme ? '#e2e8f0' : '#495057',
+            borderColor: isDarkTheme ? '#6366f1' : '#e2e8f0',
             borderWidth: 1,
             padding: 12,
-            cornerRadius: 8,
-            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+            cornerRadius: 10,
+            displayColors: true,
+            boxPadding: 6,
+            callbacks: {
+                label: function(context) {
+                    let label = context.label || '';
+                    if (label) {
+                        label += ': ';
+                    }
+                    if (context.parsed !== undefined) {
+                        if (chartType === 'amount') {
+                            label += new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(context.parsed);
+                        } else {
+                            label += context.parsed;
+                        }
+                    }
+                    return label;
+                }
+            }
         }
     },
-    scales: {
+    scales: (chartType === 'doughnut' || chartType === 'pie') ? {} : {
         x: {
             grid: {
-                color: isDarkTheme ? '#2A2A2A' : '#E9ECEF',
-                borderColor: isDarkTheme ? '#2A2A2A' : '#DEE2E6'
+                display: false,
+                drawBorder: false
             },
             ticks: {
-                color: isDarkTheme ? '#B0B0B0' : '#6C757D'
+                color: isDarkTheme ? '#94a3b8' : '#64748b',
+                font: { family: 'Inter', size: 11 }
             }
         },
         y: {
             grid: {
-                color: isDarkTheme ? '#2A2A2A' : '#E9ECEF',
-                borderColor: isDarkTheme ? '#2A2A2A' : '#DEE2E6'
+                color: isDarkTheme ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+                drawBorder: false
             },
             ticks: {
-                color: isDarkTheme ? '#B0B0B0' : '#6C757D'
+                color: isDarkTheme ? '#94a3b8' : '#64748b',
+                font: { family: 'Inter', size: 11 },
+                callback: function(value) {
+                    if (value >= 1000) return '₹' + (value / 1000) + 'k';
+                    return '₹' + value;
+                }
             }
         }
     }
@@ -119,16 +153,30 @@ export const LoanDistributionChart = () => {
     };
 
     const options = {
-        ...getChartOptions('Loan Distribution', isDarkTheme),
-        cutout: '65%',
+        ...getChartOptions('Loan Distribution', isDarkTheme, 'doughnut'),
+        cutout: '70%',
         plugins: {
-            ...getChartOptions('', isDarkTheme).plugins,
-            legend: {
-                ...getChartOptions('', isDarkTheme).plugins.legend,
-                position: 'bottom'
+            ...getChartOptions('Loan Distribution', isDarkTheme, 'doughnut').plugins,
+            tooltip: {
+                ...getChartOptions('Loan Distribution', isDarkTheme, 'amount').plugins.tooltip
             }
         }
     };
+
+    const hasData = lentAmount > 0 || borrowedAmount > 0;
+    
+    if (!hasData) {
+        return (
+            <div className="chart-container empty-chart">
+                <div className="chart-title-fallback">Loan Distribution</div>
+                <div className="empty-chart-content">
+                    <div className="empty-chart-icon">⭕</div>
+                    <p>No active loans found</p>
+                    <span>Create a loan to see your distribution</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="chart-container">
@@ -197,7 +245,22 @@ export const PaymentTrendChart = () => {
         }]
     };
 
-    const options = getChartOptions('Payment Trends (Last 6 Months)', isDarkTheme);
+    const options = getChartOptions('Payment Trends (Last 6 Months)', isDarkTheme, 'amount');
+
+    const hasData = monthlyData.some(m => m.amount > 0);
+
+    if (!hasData) {
+        return (
+            <div className="chart-container empty-chart chart-full-width">
+                <div className="chart-title-fallback">Payment Trends</div>
+                <div className="empty-chart-content">
+                    <div className="empty-chart-icon">📈</div>
+                    <p>No payment history available</p>
+                    <span>Your payment trends will appear here over time</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="chart-container">
@@ -246,19 +309,35 @@ export const MonthlyAnalyticsChart = () => {
     };
 
     const options = {
-        ...getChartOptions('This Month\'s Loans', isDarkTheme),
+        ...getChartOptions('This Month\'s Loans', isDarkTheme, 'bar'),
         scales: {
-            ...getChartOptions('', isDarkTheme).scales,
+            ...getChartOptions('', isDarkTheme, 'bar').scales,
             y: {
-                ...getChartOptions('', isDarkTheme).scales.y,
+                ...getChartOptions('', isDarkTheme, 'bar').scales.y,
                 beginAtZero: true,
                 ticks: {
-                    ...getChartOptions('', isDarkTheme).scales.y.ticks,
-                    stepSize: 1
+                    ...getChartOptions('', isDarkTheme, 'bar').scales.y.ticks,
+                    stepSize: 1,
+                    callback: (value) => value
                 }
             }
         }
     };
+
+    const hasData = activeLoans > 0 || completedLoans > 0 || overdueLoans > 0;
+
+    if (!hasData) {
+        return (
+            <div className="chart-container empty-chart">
+                <div className="chart-title-fallback">This Month's Activity</div>
+                <div className="empty-chart-content">
+                    <div className="empty-chart-icon">📊</div>
+                    <p>No activity this month</p>
+                    <span>Start tracking your monthly goals</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="chart-container">
@@ -295,7 +374,22 @@ export const StatusOverviewChart = () => {
         }]
     };
 
-    const options = getChartOptions('Loan Status Overview', isDarkTheme);
+    const options = getChartOptions('Loan Status Overview', isDarkTheme, 'pie');
+
+    const hasData = activeLoans.length > 0 || completedLoans.length > 0 || overdueLoans.length > 0;
+
+    if (!hasData) {
+       return (
+           <div className="chart-container empty-chart">
+               <div className="chart-title-fallback">Loan Status Overview</div>
+               <div className="empty-chart-content">
+                   <div className="empty-chart-icon">🥧</div>
+                   <p>No status data available</p>
+                   <span>All your loans will be categorized here</span>
+               </div>
+           </div>
+       );
+    }
 
     return (
         <div className="chart-container">

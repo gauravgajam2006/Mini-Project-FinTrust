@@ -76,7 +76,7 @@ const AnalyticsDashboard = () => {
                             {pendingLoans.slice(0, 3).map(loan => (
                                 <div key={loan.id} className="mini-list-item">
                                     <span className="mini-name">{loan.type === 'lent' ? loan.borrowerName : loan.lenderName}</span>
-                                    <span className="mini-amount">{formatCurrency(loan.outstanding)}</span>
+                                    <span className="mini-amount">{formatCurrency(loan.amount - (loan.amountPaid || 0))}</span>
                                 </div>
                             ))}
                             {pendingLoans.length > 3 && (
@@ -100,12 +100,15 @@ const AnalyticsDashboard = () => {
                     <div className="stat-number">{overdueLoans.length}</div>
                     {overdueLoans.length > 0 && (
                         <div className="mini-list">
-                            {overdueLoans.slice(0, 3).map(loan => (
-                                <div key={loan.id} className="mini-list-item">
-                                    <span className="mini-name">{loan.type === 'lent' ? loan.borrowerName : loan.lenderName}</span>
-                                    <span className="mini-days">{loan.daysOverdue}d overdue</span>
-                                </div>
-                            ))}
+                            {overdueLoans.slice(0, 3).map(loan => {
+                                const daysOverdue = Math.max(0, Math.ceil((new Date() - new Date(loan.dueDate)) / (1000 * 60 * 60 * 24)));
+                                return (
+                                    <div key={loan.id} className="mini-list-item">
+                                        <span className="mini-name">{loan.type === 'lent' ? loan.borrowerName : loan.lenderName}</span>
+                                        <span className="mini-days">{daysOverdue}d overdue</span>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

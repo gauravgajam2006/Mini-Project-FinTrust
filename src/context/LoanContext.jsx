@@ -387,6 +387,11 @@ export const LoanProvider = ({ children }) => {
     const logout = async () => {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
+        
+        // Reset theme to day on logout
+        document.documentElement.setAttribute('data-theme', 'day');
+        localStorage.setItem('theme', 'day');
+        
         setUser(null);
         setIsAuthenticated(false);
         setLoans([]);
