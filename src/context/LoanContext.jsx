@@ -317,6 +317,28 @@ export const LoanProvider = ({ children }) => {
         return { user: data.user, error: null };
     };
 
+    // GOOGLE LOGIN
+    const loginWithGoogle = async () => {
+        try {
+            const { data, error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: window.location.origin + '/dashboard',
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'select_account'
+                    }
+                }
+            });
+            if (error) throw error;
+            return { success: true, data };
+        } catch (error) {
+            console.error('Google login error:', error);
+            toast.error('Failed to log in with Google');
+            return { success: false, error: error.message };
+        }
+    };
+
     // SIGNUP
     const signup = async (email, password, name, phone, aadhaar) => {
         const { data, error } = await supabase.auth.signUp({
@@ -505,7 +527,7 @@ export const LoanProvider = ({ children }) => {
         <LoanContext.Provider value={{
             loans, user, loading, isAuthenticated, activities, gamification,
             fetchLoans, fetchActivities, createLoan, updateLoan, deleteLoan,
-            login, signup, logout, addRepayment, getDashboardStats
+            login, signup, logout, loginWithGoogle, addRepayment, getDashboardStats
         }}>
             {children}
         </LoanContext.Provider>
