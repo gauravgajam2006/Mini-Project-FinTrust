@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, orderBy, limit, getDocs } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 import './Leaderboard.css';
 
 const Leaderboard = () => {
@@ -10,23 +9,27 @@ const Leaderboard = () => {
     useEffect(() => {
         const fetchLeaderboard = async () => {
             try {
-                // In a real app we'd rank by XP and transaction speed
-                // For now, we'll try to get all users or mock it
                 setLoading(true);
-                const q = query(collection(db, 'users'), limit(50));
-                const snapshot = await getDocs(q);
+                // Fetch random sampling for demo if points aren't established
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
 
-                const users = [];
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    // Generate mock XP/Speed for demo if not present
-                    users.push({
-                        id: doc.id,
-                        name: data.name || 'Anonymous',
-                        email: data.email,
-                        xp: data.xp || Math.floor(Math.random() * 5000) + 100,
-                        speedScore: data.speedScore || (Math.random() * 5 + 8).toFixed(1) // Fake out of 10
-                    });
+                if (error) throw error;
+
+                const users = data.map(profile => {
+                    const gamification = profile.gamification || {};
+                    return {
+                        id: profile.id,
+                        name: profile.name || 'Anonymous',
+                        email: profile.email,
+                        xp: gamification.points || Math.floor(Math.random() * 5000) + 100,
+                        speedScore: gamification.stats?.onTimePayments > 0 
+                            ? ((gamification.stats.onTimePayments / gamification.stats.totalPayments) * 10).toFixed(1)
+                            : (Math.random() * 5 + 4).toFixed(1)
+                    };
                 });
 
                 // Sort by XP
@@ -70,7 +73,7 @@ const Leaderboard = () => {
                                             {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                                         </td>
                                         <td className="user-cell">
-                                            <div className="user-avatar-small">{user.name.charAt(0)}</div>
+                                            <div className="user-avatar-small">{user.name?.charAt(0) || 'U'}</div>
                                             <div className="user-name-cell">
                                                 {user.name}
                                             </div>

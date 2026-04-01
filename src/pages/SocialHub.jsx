@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLoan } from '../context/LoanContext';
-import { collection, query, where, getDocs, addDoc, updateDoc, doc, serverTimestamp, or } from 'firebase/firestore';
-import { db } from '../firebase';
+import { supabase } from '../supabase';
 import './SocialHub.css';
 import toast from 'react-hot-toast';
 
@@ -24,28 +23,23 @@ const SocialHub = () => {
 
     const fetchConnections = async () => {
         try {
-            // Find connections where user is either sender or receiver
-            const q1 = query(collection(db, 'connections'), where('sender_id', '==', user.id));
-            const q2 = query(collection(db, 'connections'), where('receiver_id', '==', user.id));
+            const { data, error } = await supabase
+                .from('connections')
+                .select('*')
+                .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`);
 
-            const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
-
-            const allConnections = [];
-            snap1.forEach(doc => allConnections.push({ id: doc.id, ...doc.data() }));
-            snap2.forEach(doc => allConnections.push({ id: doc.id, ...doc.data() }));
+            if (error) throw error;
 
             const accepted = [];
             const pending = [];
 
-            allConnections.forEach(conn => {
+            data.forEach(conn => {
                 if (conn.status === 'accepted') {
-                    // Extract the OTHER person's info
                     const friendInfo = conn.sender_id === user.id
                         ? { id: conn.receiver_id, name: conn.receiver_name, email: conn.receiver_email }
                         : { id: conn.sender_id, name: conn.sender_name, email: conn.sender_email };
                     accepted.push({ ...conn, friend: friendInfo });
                 } else if (conn.status === 'pending' && conn.receiver_id === user.id) {
-                    // Only show pending requests RECEIVED by the user
                     pending.push(conn);
                 }
             });
@@ -63,25 +57,16 @@ const SocialHub = () => {
 
         setLoading(true);
         try {
-            // We search by exact email or phone for privacy reasons in a financial app
-            const q = query(
-                collection(db, 'users'),
-                or(
-                    where('email', '==', searchTerm.trim()),
-                    where('phone', '==', searchTerm.trim())
-                )
-            );
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .or(`email.eq.${searchTerm.trim()},phone.eq.${searchTerm.trim()}`)
+                .neq('id', user.id);
 
-            const snapshot = await getDocs(q);
-            const results = [];
-            snapshot.forEach(doc => {
-                if (doc.id !== user.id) { // Don't show self
-                    results.push({ id: doc.id, ...doc.data() });
-                }
-            });
+            if (error) throw error;
 
-            setSearchResults(results);
-            if (results.length === 0) {
+            setSearchResults(data);
+            if (data.length === 0) {
                 toast.error('No matching user found. Ensure they have registered with this exact email or phone.');
             }
         } catch (error) {
@@ -94,26 +79,28 @@ const SocialHub = () => {
 
     const sendFriendRequest = async (targetUser) => {
         try {
-            // Check if connection already exists
             const existingFriend = friends.find(f => f.friend.id === targetUser.id);
             if (existingFriend) {
                 toast.error(`${targetUser.name} is already your friend!`);
                 return;
             }
 
-            await addDoc(collection(db, 'connections'), {
-                sender_id: user.id,
-                sender_name: user.name,
-                sender_email: user.email,
-                receiver_id: targetUser.id,
-                receiver_name: targetUser.name,
-                receiver_email: targetUser.email,
-                status: 'pending',
-                created_at: serverTimestamp()
-            });
+            const { error } = await supabase
+                .from('connections')
+                .insert([{
+                    sender_id: user.id,
+                    sender_name: user.name,
+                    sender_email: user.email,
+                    receiver_id: targetUser.id,
+                    receiver_name: targetUser.name,
+                    receiver_email: targetUser.email,
+                    status: 'pending'
+                }]);
+
+            if (error) throw error;
 
             toast.success(`Friend request sent to ${targetUser.name}!`);
-            setSearchResults([]); // Clear search after sending
+            setSearchResults([]);
         } catch (error) {
             console.error('Error sending request:', error);
             toast.error('Failed to send request.');
@@ -122,21 +109,18 @@ const SocialHub = () => {
 
     const handleRequest = async (requestId, accept) => {
         try {
-            const connRef = doc(db, 'connections', requestId);
-            if (accept) {
-                await updateDoc(connRef, {
-                    status: 'accepted',
-                    updated_at: serverTimestamp()
-                });
-                toast.success('Friend request accepted!');
-            } else {
-                await updateDoc(connRef, {
-                    status: 'rejected',
-                    updated_at: serverTimestamp()
-                });
-                toast('Friend request declined.', { icon: '🛑' });
-            }
-            fetchConnections(); // Refresh lists
+            const { error } = await supabase
+                .from('connections')
+                .update({ 
+                  status: accept ? 'accepted' : 'rejected',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', requestId);
+
+            if (error) throw error;
+
+            toast.success(accept ? 'Friend request accepted!' : 'Friend request declined.');
+            fetchConnections();
         } catch (error) {
             console.error('Error handling request:', error);
             toast.error('Something went wrong.');
@@ -150,13 +134,15 @@ const SocialHub = () => {
         }
 
         try {
-            await addDoc(collection(db, 'vouches'), {
-                from_user: user.id,
-                to_user: friendId,
-                created_at: serverTimestamp()
-            });
+            const { error } = await supabase
+                .from('vouches')
+                .insert([{
+                    from_user: user.id,
+                    to_user: friendId
+                }]);
+
+            if (error) throw error;
             toast.success('You successfully vouched for this user! Their trustworthiness just grew.', { icon: '🤝' });
-            // In a full implementation, this would trigger a cloud function to boost the target's trust score
         } catch (error) {
             console.error('Error vouching:', error);
             toast.error('Failed to send vouch.');
@@ -165,7 +151,6 @@ const SocialHub = () => {
 
     const importFromContacts = async () => {
         try {
-            // Check if Contact Picker API is supported
             if ('contacts' in navigator && 'ContactsManager' in window) {
                 const props = ['name', 'tel'];
                 const opts = { multiple: true };
@@ -179,7 +164,6 @@ const SocialHub = () => {
                 }
             } else {
                 toast.error('Contact Picker API not supported on this browser (usually Android Chrome only). Mocking import instead.', { duration: 4000 });
-                // Mock behavior for desktop/iOS
                 setTimeout(() => {
                     const newConn = { friend: { name: 'Family Contact (Imported)', email: '+919876543210' }, id: 'mock_' + Date.now(), status: 'accepted' };
                     setFriends(prev => [...prev, newConn]);
@@ -216,7 +200,6 @@ const SocialHub = () => {
             </div>
 
             <div className="social-grid">
-                {/* Left Column - Search & Pending Requests */}
                 <div className="social-left">
                     <div className="social-card">
                         <h3>🔍 Find Contacts</h3>
@@ -261,12 +244,9 @@ const SocialHub = () => {
                                 {searchResults.map(result => (
                                     <div key={result.id} className="user-list-item">
                                         <div className="user-info">
-                                            <div className="user-avatar">{result.name.charAt(0)}</div>
+                                            <div className="user-avatar">{result.name?.charAt(0) || 'U'}</div>
                                             <div>
-                                                <div className="user-name">
-                                                    {result.name}
-                                                    {result.is_new_user && <span className="badge-new">NEW</span>}
-                                                </div>
+                                                <div className="user-name">{result.name}</div>
                                                 <div className="user-email">{result.email}</div>
                                             </div>
                                         </div>
@@ -289,7 +269,7 @@ const SocialHub = () => {
                                 {pendingRequests.map(req => (
                                     <div key={req.id} className="user-list-item">
                                         <div className="user-info">
-                                            <div className="user-avatar">{req.sender_name.charAt(0)}</div>
+                                            <div className="user-avatar">{req.sender_name?.charAt(0) || 'U'}</div>
                                             <div>
                                                 <div className="user-name">{req.sender_name}</div>
                                                 <div className="user-subtext">Wants to connect</div>
@@ -306,7 +286,6 @@ const SocialHub = () => {
                     )}
                 </div>
 
-                {/* Right Column - My Network */}
                 <div className="social-right">
                     <div className="social-card">
                         <h3>🤝 My Trusted Network ({friends.length})</h3>
@@ -324,7 +303,7 @@ const SocialHub = () => {
                                     <div key={conn.id} className="friend-card">
                                         <div className="friend-header">
                                             <div className="user-info">
-                                                <div className="user-avatar">{conn.friend.name.charAt(0)}</div>
+                                                <div className="user-avatar">{conn.friend.name?.charAt(0) || 'U'}</div>
                                                 <div>
                                                     <div className="user-name">{conn.friend.name}</div>
                                                     <div className="user-email">{conn.friend.email}</div>

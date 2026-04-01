@@ -4,7 +4,7 @@ import GamificationWidget from '../components/GamificationWidget';
 import './Profile.css';
 
 const Profile = () => {
-  const { getDashboardStats, user } = useLoan();
+  const { getDashboardStats, user, gamification } = useLoan();
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
@@ -12,20 +12,8 @@ const Profile = () => {
     joinDate: ''
   });
 
-  // Get gamification data from localStorage or context
-  const gamificationData = JSON.parse(localStorage.getItem('fintrust_gamification')) || {
-    trustScore: 500,
-    level: 1,
-    points: 0,
-    badges: [],
-    streak: 0,
-    stats: {
-      totalLoans: 0,
-      completedLoans: 0,
-      totalPayments: 0,
-      onTimePayments: 0
-    }
-  };
+  const gamificationData = gamification;
+
 
   const getBadges = () => {
     const allBadges = [

@@ -62,7 +62,7 @@ const AnimatedRoutes = () => {
 
 function App() {
   useEffect(() => {
-    console.log('Firebase client initialized:', app);
+    console.log('Supabase client initialized:', supabase);
   }, []);
 
   return (
