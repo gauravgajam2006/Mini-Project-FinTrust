@@ -45,16 +45,24 @@ create table loans (
 alter table loans enable row level security;
 
 -- Policy: Users can only see their own loans
-create policy "Users can view own loans" on loans
-  for select using (auth.uid() = user_id);
+create policy "Users can view their involved loans" on loans
+  for select using (
+    auth.uid() = user_id OR
+    lower(borrower_email) = lower((select email from profiles where id = auth.uid())) OR
+    lower(lender_email) = lower((select email from profiles where id = auth.uid()))
+  );
 
 create policy "Users can insert own loans" on loans
   for insert with check (auth.uid() = user_id);
 
-create policy "Users can update own loans" on loans
-  for update using (auth.uid() = user_id);
+create policy "Users can update their involved loans" on loans
+  for update using (
+    auth.uid() = user_id OR
+    lower(borrower_email) = lower((select email from profiles where id = auth.uid())) OR
+    lower(lender_email) = lower((select email from profiles where id = auth.uid()))
+  );
 
-create policy "Users can delete own loans" on loans
+create policy "Users can delete their created loans" on loans
   for delete using (auth.uid() = user_id);
 
 -- Create a table for payments
@@ -71,11 +79,23 @@ create table payments (
 -- Enable RLS for payments
 alter table payments enable row level security;
 
-create policy "Users can view own payments" on payments
-  for select using (auth.uid() = user_id);
+create policy "Users can view payments for their involved loans" on payments
+  for select using (
+    exists (
+      select 1 from loans
+      where loans.id = payments.loan_id
+      and (
+        loans.user_id = auth.uid() or
+        lower(loans.borrower_email) = lower((select email from profiles where id = auth.uid())) or
+        lower(loans.lender_email) = lower((select email from profiles where id = auth.uid()))
+      )
+    )
+  );
 
-create policy "Users can insert own payments" on payments
-  for insert with check (auth.uid() = user_id);
+create policy "Users can insert payments if involved" on payments
+  for insert with check (
+    auth.uid() = user_id
+  );
 
 -- Create a table for activities
 create table activities (

@@ -54,7 +54,7 @@ const LoanDetails = () => {
 
     const personName = loan.type === 'lent' ? loan.borrowerName : loan.lenderName;
     const isReceiver = loan.created_by !== user.id; // Did someone else create this?
-    const isBorrower = loan.borrowerEmail === user.email || (loan.type === 'borrowed' && loan.created_by === user.id) || (loan.type === 'lent' && loan.created_by !== user.id);
+    const isBorrower = loan.type === 'borrowed';
     const daysRemaining = getDaysUntilDue(loan.dueDate);
     const progress = (loan.amountPaid / loan.amount) * 100;
 
@@ -116,9 +116,11 @@ const LoanDetails = () => {
                                         <span>Paid: {formatCurrency(loan.amountPaid)}</span>
                                     </div>
                                 </div>
-                                <button onClick={() => setShowPaymentForm(true)} className="btn-add-payment">
-                                    💳 Add Payment
-                                </button>
+                                {isBorrower && (
+                                    <button onClick={() => setShowPaymentForm(true)} className="btn-add-payment">
+                                        💳 Add Payment
+                                    </button>
+                                )}
                             </div>
                         ) : (
                             <AddPayment

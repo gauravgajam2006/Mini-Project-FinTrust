@@ -4,16 +4,16 @@ import { useLoan } from '../context/LoanContext';
 import { getDaysUntilDue } from '../utils/loanValidation';
 import GamificationWidget from './GamificationWidget';
 import ThemeToggle from './ThemeToggle';
-import ReminderModal from './ReminderModal';
+import NotificationPanel from './NotificationPanel';
 import './Navbar.css';
 
 const Navbar = () => {
-    const { user, logout, loans } = useLoan();
+    const { user, logout, loans, unreadNotificationCount } = useLoan();
     const navigate = useNavigate();
-    const [showReminders, setShowReminders] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     const handleLogout = async (e) => {
-        e.stopPropagation(); // Prevent the parent click event (profile)
+        e.stopPropagation();
         try {
             await logout();
             navigate('/');
@@ -26,10 +26,13 @@ const Navbar = () => {
         navigate('/profile');
     };
 
-    // Calculate active reminders count
+    // Calculate reminders count (due in 3 days or overdue)
     const reminderCount = loans.filter(loan =>
-        loan.status !== 'completed' && getDaysUntilDue(loan.dueDate) <= 3
+        loan.status !== 'completed' && loan.status !== 'rejected' && getDaysUntilDue(loan.dueDate) <= 3
     ).length;
+
+    // Total badge = unread notifications + reminders
+    const totalBadge = unreadNotificationCount + reminderCount;
 
     return (
         <nav className="navbar">
@@ -46,18 +49,18 @@ const Navbar = () => {
 
                 <button
                     className="navbar-notifications"
-                    onClick={() => setShowReminders(true)}
+                    onClick={() => setShowNotifications(true)}
                 >
                     🔔
-                    {reminderCount > 0 && (
-                        <span className="notification-badge">{reminderCount}</span>
+                    {totalBadge > 0 && (
+                        <span className="notification-badge">{totalBadge > 9 ? '9+' : totalBadge}</span>
                     )}
                 </button>
 
-                {/* Notification Modal */}
-                <ReminderModal
-                    isOpen={showReminders}
-                    onClose={() => setShowReminders(false)}
+                {/* Notification Panel */}
+                <NotificationPanel
+                    isOpen={showNotifications}
+                    onClose={() => setShowNotifications(false)}
                 />
 
                 <div className="navbar-profile-wrapper">

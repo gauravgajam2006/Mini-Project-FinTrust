@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { useLoan } from '../context/LoanContext';
 import { formatCurrency, getDaysUntilDue } from '../utils/loanValidation';
 import { exportLoansToCSV } from '../utils/exportUtils';
@@ -9,17 +10,23 @@ import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import './Dashboard.css';
 
 const Dashboard = () => {
-    const { loans, getDashboardStats } = useLoan();
+    const { loans, getDashboardStats, getPendingApprovalLoans, respondToLoan, fetchLoans } = useLoan();
     const stats = getDashboardStats();
+    const pendingApprovals = getPendingApprovalLoans();
+    const [respondingTo, setRespondingTo] = useState(null);
 
     const recentLentLoans = loans.filter(l => l.type === 'lent').slice(0, 5);
     const recentBorrowedLoans = loans.filter(l => l.type === 'borrowed').slice(0, 5);
 
+    const handleRespond = async (loanId, response) => {
+        setRespondingTo(loanId);
+        await respondToLoan(loanId, response);
+        await fetchLoans();
+        setRespondingTo(null);
+    };
+
     return (
         <div className="dashboard">
-            {/* Automatic Popup Notification - Moved to Navbar */}
-
-
             <div className="dashboard-header">
                 <h1>Dashboard</h1>
                 <div style={{ display: 'flex', gap: '12px' }}>
@@ -31,6 +38,91 @@ const Dashboard = () => {
                     </Link>
                 </div>
             </div>
+
+            {/* Pending Approvals Section */}
+            {pendingApprovals.length > 0 && (
+                <div className="pending-approvals-section">
+                    <div className="pending-approvals-header">
+                        <div className="pending-approvals-title">
+                            <span className="pending-icon">📬</span>
+                            <h2>Pending Loan Approvals</h2>
+                            <span className="pending-count">{pendingApprovals.length}</span>
+                        </div>
+                        <p className="pending-subtitle">These loans were created by other users involving you. Review and respond.</p>
+                    </div>
+                    <div className="pending-approvals-grid">
+                        {pendingApprovals.map(loan => (
+                            <div key={loan.id} className="pending-card">
+                                <div className="pending-card-top">
+                                    <div className="pending-type-badge">
+                                        {loan.type === 'borrowed' ? (
+                                            <span className="badge-borrow">↙️ You Borrow</span>
+                                        ) : (
+                                            <span className="badge-lend">↗️ You Lend</span>
+                                        )}
+                                    </div>
+                                    <span className="pending-status-tag">⏳ Pending</span>
+                                </div>
+
+                                <div className="pending-card-amount">
+                                    {formatCurrency(loan.amount)}
+                                </div>
+
+                                <div className="pending-card-details">
+                                    <div className="pending-detail-row">
+                                        <span className="pending-detail-label">
+                                            {loan.type === 'lent' ? 'Borrower' : 'Lender'}
+                                        </span>
+                                        <span className="pending-detail-value">
+                                            {loan.type === 'lent' ? loan.borrowerName : loan.lenderName}
+                                        </span>
+                                    </div>
+                                    {loan.dueDate && (
+                                        <div className="pending-detail-row">
+                                            <span className="pending-detail-label">Due Date</span>
+                                            <span className="pending-detail-value">
+                                                {new Date(loan.dueDate).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {loan.interestRate > 0 && (
+                                        <div className="pending-detail-row">
+                                            <span className="pending-detail-label">Interest</span>
+                                            <span className="pending-detail-value">{loan.interestRate}%</span>
+                                        </div>
+                                    )}
+                                    {loan.description && (
+                                        <div className="pending-detail-row">
+                                            <span className="pending-detail-label">Note</span>
+                                            <span className="pending-detail-value pending-note">{loan.description}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="pending-card-actions">
+                                    <button
+                                        className="pending-btn accept"
+                                        onClick={() => handleRespond(loan.id, 'accept')}
+                                        disabled={respondingTo === loan.id}
+                                    >
+                                        {respondingTo === loan.id ? 'Processing...' : '✓ Accept Loan'}
+                                    </button>
+                                    <button
+                                        className="pending-btn reject"
+                                        onClick={() => handleRespond(loan.id, 'reject')}
+                                        disabled={respondingTo === loan.id}
+                                    >
+                                        {respondingTo === loan.id ? 'Processing...' : '✗ Decline'}
+                                    </button>
+                                    <Link to={`/loan/${loan.id}`} className="pending-btn details">
+                                        View Details
+                                    </Link>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Gamification Dashboard */}
             <GamificationDashboard />

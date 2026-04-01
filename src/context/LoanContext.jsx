@@ -32,6 +32,8 @@ export const LoanProvider = ({ children }) => {
         }
     });
     const [activities, setActivities] = useState([]);
+    const [notifications, setNotifications] = useState([]);
+    const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
 
     // Auth state listener
     useEffect(() => {
@@ -98,11 +100,21 @@ export const LoanProvider = ({ children }) => {
     };
 
     // Helper function to map database fields to app format
-    const mapLoanFromDB = (dbLoan) => ({
+    const mapLoanFromDB = (dbLoan) => {
+        let computedType = dbLoan.type;
+        if (user?.email) {
+            if (dbLoan.borrower_email?.toLowerCase() === user.email.toLowerCase()) {
+                computedType = 'borrowed';
+            } else if (dbLoan.lender_email?.toLowerCase() === user.email.toLowerCase()) {
+                computedType = 'lent';
+            }
+        }
+
+        return {
         id: dbLoan.id,
         user_id: dbLoan.user_id,
         created_by: dbLoan.created_by,
-        type: dbLoan.type,
+        type: computedType,
         amount: parseFloat(dbLoan.amount),
         amountPaid: parseFloat(dbLoan.amount_paid) || 0,
         currency: dbLoan.currency,
@@ -118,7 +130,8 @@ export const LoanProvider = ({ children }) => {
         metadata: dbLoan.metadata,
         createdAt: new Date(dbLoan.created_at),
         payments: dbLoan.payments || []
-    });
+        };
+    };
 
     // GET SINGLE LOAN DETAILS
     const getLoanDetails = (loanId) => {
@@ -157,7 +170,7 @@ export const LoanProvider = ({ children }) => {
             const { data, error } = await supabase
                 .from('loans')
                 .select('*, payments(*)')
-                .or(`user_id.eq.${user.id},borrower_email.eq.${user.email},lender_email.eq.${user.email}`)
+                .or(`user_id.eq.${user.id},borrower_email.ilike.${user.email},lender_email.ilike.${user.email}`)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -230,14 +243,207 @@ export const LoanProvider = ({ children }) => {
         if (notified) sessionStorage.setItem('fintrust_notified_due', 'true');
     };
 
+    // FETCH NOTIFICATIONS
+    const fetchNotifications = async () => {
+        if (!user) return;
+        try {
+            const { data, error } = await supabase
+                .from('notifications')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false })
+                .limit(50);
+
+            if (error) throw error;
+            setNotifications(data || []);
+            setUnreadNotificationCount((data || []).filter(n => !n.is_read).length);
+        } catch (error) {
+            console.error('Error fetching notifications:', error.message);
+        }
+    };
+
+    // MARK NOTIFICATION AS READ
+    const markNotificationRead = async (notificationId) => {
+        try {
+            const { error } = await supabase
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('id', notificationId);
+
+            if (error) throw error;
+            setNotifications(prev => prev.map(n => n.id === notificationId ? { ...n, is_read: true } : n));
+            setUnreadNotificationCount(prev => Math.max(0, prev - 1));
+        } catch (error) {
+            console.error('Error marking notification as read:', error);
+        }
+    };
+
+    // MARK ALL NOTIFICATIONS AS READ
+    const markAllNotificationsRead = async () => {
+        if (!user) return;
+        try {
+            const { error } = await supabase
+                .from('notifications')
+                .update({ is_read: true })
+                .eq('user_id', user.id)
+                .eq('is_read', false);
+
+            if (error) throw error;
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            setUnreadNotificationCount(0);
+        } catch (error) {
+            console.error('Error marking all notifications as read:', error);
+        }
+    };
+
+    // DELETE A NOTIFICATION
+    const deleteNotification = async (notificationId) => {
+        try {
+            const notification = notifications.find(n => n.id === notificationId);
+            const { error } = await supabase
+                .from('notifications')
+                .delete()
+                .eq('id', notificationId);
+
+            if (error) throw error;
+            setNotifications(prev => prev.filter(n => n.id !== notificationId));
+            if (notification && !notification.is_read) {
+                setUnreadNotificationCount(prev => Math.max(0, prev - 1));
+            }
+        } catch (error) {
+            console.error('Error deleting notification:', error);
+        }
+    };
+
+    // SEND NOTIFICATION TO ANOTHER USER
+    const sendNotification = async (targetUserId, type, title, message, loanId = null) => {
+        if (!user) return;
+        try {
+            await supabase.from('notifications').insert([{
+                user_id: targetUserId,
+                type,
+                title,
+                message,
+                loan_id: loanId,
+                from_user_id: user.id,
+                from_user_name: user.name || user.email?.split('@')[0] || 'User',
+                is_read: false
+            }]);
+        } catch (error) {
+            console.error('Error sending notification:', error);
+        }
+    };
+
+    // RESPOND TO LOAN (ACCEPT/REJECT)
+    const respondToLoan = async (loanId, response) => {
+        if (!user) return { success: false, error: 'User not authenticated' };
+        try {
+            // Try local state first, then fetch from DB if not found
+            let loan = loans.find(l => l.id === loanId);
+            
+            if (!loan) {
+                // Loan not in local state — fetch directly from database
+                const { data: dbLoan, error: fetchError } = await supabase
+                    .from('loans')
+                    .select('*')
+                    .eq('id', loanId)
+                    .single();
+                
+                if (fetchError || !dbLoan) {
+                    console.error('Could not find loan:', fetchError);
+                    return { success: false, error: 'Loan not found in database' };
+                }
+                
+                // Map DB loan to app format for use below
+                loan = {
+                    id: dbLoan.id,
+                    user_id: dbLoan.user_id,
+                    created_by: dbLoan.created_by,
+                    type: dbLoan.type,
+                    amount: parseFloat(dbLoan.amount),
+                    amountPaid: parseFloat(dbLoan.amount_paid) || 0,
+                    borrowerName: dbLoan.borrower_name,
+                    borrowerEmail: dbLoan.borrower_email,
+                    lenderName: dbLoan.lender_name,
+                    lenderEmail: dbLoan.lender_email,
+                    status: dbLoan.status,
+                };
+            }
+
+            const newStatus = response === 'accept' ? 'active' : 'rejected';
+
+            const { error } = await supabase
+                .from('loans')
+                .update({ status: newStatus, updated_at: new Date().toISOString() })
+                .eq('id', loanId);
+
+            if (error) throw error;
+
+            // Update local state
+            setLoans(prev => prev.map(l => l.id === loanId ? { ...l, status: newStatus } : l));
+
+            // Notify the loan creator
+            const creatorId = loan.created_by || loan.user_id;
+            if (creatorId && creatorId !== user.id) {
+                const userName = user.name || user.email?.split('@')[0] || 'User';
+                if (response === 'accept') {
+                    await sendNotification(
+                        creatorId,
+                        'loan_approved',
+                        'Loan Accepted! ✅',
+                        `${userName} has accepted the ₹${loan.amount} loan.`,
+                        loanId
+                    );
+                    toast.success('Loan accepted successfully!');
+                } else {
+                    await sendNotification(
+                        creatorId,
+                        'loan_rejected',
+                        'Loan Declined ❌',
+                        `${userName} has declined the ₹${loan.amount} loan.`,
+                        loanId
+                    );
+                    toast.success('Loan rejected.');
+                }
+            }
+
+            logActivity(
+                response === 'accept' ? 'LOAN_ACCEPTED' : 'LOAN_REJECTED',
+                `${response === 'accept' ? 'Accepted' : 'Rejected'} loan of ₹${loan.amount}`,
+                loanId
+            );
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error responding to loan:', error);
+            return { success: false, error: error.message };
+        }
+    };
+
+    // GET PENDING APPROVAL LOANS (loans created by others where current user is counterpart)
+    const getPendingApprovalLoans = () => {
+        if (!user) return [];
+        return loans.filter(l => {
+            if (l.status !== 'pending_approval') return false;
+            // The loan was not created by the current user
+            const createdByOther = l.created_by && l.created_by !== user.id;
+            // The current user is the counterpart (borrower or lender)
+            const isCounterpart = l.borrowerEmail?.toLowerCase() === user.email?.toLowerCase() || l.lenderEmail?.toLowerCase() === user.email?.toLowerCase();
+            return createdByOther && isCounterpart;
+        });
+    };
+
     // Initial Load
     useEffect(() => {
         if (user) {
             fetchLoans();
             fetchActivities();
+            fetchNotifications();
         } else {
             setLoans([]);
             setActivities([]);
+            setNotifications([]);
+            setUnreadNotificationCount(0);
         }
     }, [user]);
 
@@ -246,6 +452,37 @@ export const LoanProvider = ({ children }) => {
         if (!user) return { success: false, error: 'User not authenticated' };
         setLoading(true);
         try {
+            // --- VALIDATE COUNTERPART USER EXISTS ---
+            const counterpartEmail = loanData.type === 'lent'
+                ? loanData.borrowerEmail
+                : loanData.lenderEmail;
+
+            let counterpartProfile = null;
+            if (counterpartEmail) {
+                if (counterpartEmail.toLowerCase() === user.email.toLowerCase()) {
+                    return { success: false, error: "You cannot lend or borrow money from yourself." };
+                }
+
+                const { data: profileData, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('id, name, email')
+                    .eq('email', counterpartEmail.toLowerCase())
+                    .single();
+
+                if (profileError || !profileData) {
+                    return { success: false, error: 'User does not exist. Please use a registered email address.' };
+                }
+                
+                counterpartProfile = profileData;
+                
+                // Prevent creating a loan with oneself
+                if (counterpartProfile.id === user.id) {
+                     return { success: false, error: 'You cannot create a loan with yourself.' };
+                }
+            } else {
+                 return { success: false, error: 'An email is required for the other party.' };
+            }
+
             const newLoan = {
                 user_id: user.id,
                 type: loanData.type,
@@ -278,6 +515,33 @@ export const LoanProvider = ({ children }) => {
 
             logActivity('LOAN_CREATED', `Created ${loanData.type} loan for ₹${loanData.amount}`, data.id);
             updateStatsOnLoanCreate();
+
+            // --- NOTIFY THE COUNTERPART USER ---
+            if (counterpartProfile && counterpartProfile.id !== user.id) {
+                const userName = user.name || user.email?.split('@')[0] || 'User';
+                const loanTypeLabel = loanData.type === 'lent' ? 'lent you' : 'borrowed from you';
+
+                await sendNotification(
+                    counterpartProfile.id,
+                    'loan_created',
+                    'New Loan Request 📋',
+                    `${userName} has ${loanTypeLabel} ₹${loanData.amount}. Please review and accept or reject this loan.`,
+                    data.id
+                );
+
+                // Also log activity for the counterpart
+                try {
+                    await supabase.from('activities').insert([{
+                        user_id: counterpartProfile.id,
+                        type: 'LOAN_RECEIVED',
+                        description: `${userName} created a ${loanData.type} loan of ₹${loanData.amount} involving you`,
+                        loan_id: data.id,
+                        metadata: {}
+                    }]);
+                } catch (actErr) {
+                    console.error('Error logging counterpart activity:', actErr);
+                }
+            }
 
             return { success: true, loan: mappedLoan };
         } catch (error) {
@@ -435,6 +699,41 @@ export const LoanProvider = ({ children }) => {
             updateStatsOnPayment(paymentData.date, loan.dueDate);
             logActivity('PAYMENT_MADE', `Payment of ₹${paymentData.amount} made`, loanId);
             await updateLoanStatus(loanId);
+
+            // --- NOTIFY THE LENDER ---
+            try {
+                // Note: since only the borrower can make payments now, the counterparty must be the lender.
+                const lenderEmail = loan.lenderEmail;
+                if (lenderEmail && lenderEmail !== user.email) {
+                    const { data: lenderProfile } = await supabase
+                        .from('profiles')
+                        .select('id, name')
+                        .eq('email', lenderEmail)
+                        .single();
+
+                    if (lenderProfile && lenderProfile.id !== user.id) {
+                        const borrowerName = user.name || user.email?.split('@')[0] || 'User';
+                        await sendNotification(
+                            lenderProfile.id,
+                            'payment_received',
+                            'Payment Received 💰',
+                            `${borrowerName} has made a payment of ₹${paymentData.amount} towards your loan.`,
+                            loanId
+                        );
+                        
+                        // Log activity for lender
+                        await supabase.from('activities').insert([{
+                            user_id: lenderProfile.id,
+                            type: 'PAYMENT_RECEIVED',
+                            description: `Received payment of ₹${paymentData.amount} from ${borrowerName}`,
+                            loan_id: loanId,
+                            metadata: {}
+                        }]);
+                    }
+                }
+            } catch (notifyErr) {
+                console.error("Error notifying lender about payment:", notifyErr);
+            }
 
             return { success: true, payment: data };
         } catch (error) {
@@ -603,11 +902,15 @@ export const LoanProvider = ({ children }) => {
     return (
         <LoanContext.Provider value={{
             loans, user, loading, isAuthenticated, activities, gamification,
-            fetchLoans, fetchActivities, createLoan, updateLoan, deleteLoan,
+            notifications, unreadNotificationCount,
+            fetchLoans, fetchActivities, fetchNotifications,
+            createLoan, updateLoan, deleteLoan,
             login, signup, logout, loginWithGoogle, addRepayment, getDashboardStats,
             getLoanDetails, getLoansByUser, getRepaymentsByLoan, calculateOutstandingAmount,
             getTotalAmountOwed, getPendingLoans, getOverdueLoans,
-            getActivityFeed, getLoanActivityLog
+            getActivityFeed, getLoanActivityLog,
+            markNotificationRead, markAllNotificationsRead, deleteNotification,
+            respondToLoan, getPendingApprovalLoans
         }}>
             {children}
         </LoanContext.Provider>
