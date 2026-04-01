@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { app } from './firebase';
+import { supabase } from './supabase';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
