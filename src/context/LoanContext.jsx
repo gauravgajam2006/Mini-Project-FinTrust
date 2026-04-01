@@ -587,13 +587,22 @@ export const LoanProvider = ({ children }) => {
         return loans.filter(l => l.status === 'overdue');
     };
 
+    const getActivityFeed = (limit = 10) => {
+        return activities.slice(0, limit);
+    };
+
+    const getLoanActivityLog = (loanId) => {
+        return activities.filter(a => a.loan_id === loanId);
+    };
+
     return (
         <LoanContext.Provider value={{
             loans, user, loading, isAuthenticated, activities, gamification,
             fetchLoans, fetchActivities, createLoan, updateLoan, deleteLoan,
             login, signup, logout, loginWithGoogle, addRepayment, getDashboardStats,
             getLoanDetails, getLoansByUser, getRepaymentsByLoan, calculateOutstandingAmount,
-            getTotalAmountOwed, getPendingLoans, getOverdueLoans
+            getTotalAmountOwed, getPendingLoans, getOverdueLoans,
+            getActivityFeed, getLoanActivityLog
         }}>
             {children}
         </LoanContext.Provider>
