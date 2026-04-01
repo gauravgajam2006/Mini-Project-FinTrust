@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useLoan } from '../context/LoanContext';
 import './LoginSignup.css';
 
@@ -229,6 +230,7 @@ const LoginSignup = () => {
                                                 value={name}
                                                 onChange={(e) => setName(e.target.value)}
                                                 required={!isLogin}
+                                                autoComplete="name"
                                             />
                                         </div>
                                     )}
@@ -243,6 +245,7 @@ const LoginSignup = () => {
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
+                                            autoComplete="email"
                                         />
                                     </div>
 
@@ -257,6 +260,7 @@ const LoginSignup = () => {
                                                 value={phone}
                                                 onChange={(e) => setPhone(e.target.value)}
                                                 required={!isLogin}
+                                                autoComplete="tel"
                                             />
                                         </div>
                                     )}
@@ -274,6 +278,7 @@ const LoginSignup = () => {
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
                                                 required
+                                                autoComplete={isLogin ? 'current-password' : 'new-password'}
                                             />
                                             <button
                                                 type="button"
@@ -297,7 +302,12 @@ const LoginSignup = () => {
                                                 />
                                                 <label htmlFor="remember" className="checkbox-label">Remember me</label>
                                             </div>
-                                            <a href="#forgot" className="forgot-link">Forgot password?</a>
+                                            <button
+                                                type="button"
+                                                className="forgot-link"
+                                                onClick={() => toast('Password reset coming soon! Contact support for now.', { icon: '🔒' })}
+                                                style={{ background: 'none', border: 'none', cursor: 'pointer' }}
+                                            >Forgot password?</button>
                                         </div>
                                     )}
                                 </>

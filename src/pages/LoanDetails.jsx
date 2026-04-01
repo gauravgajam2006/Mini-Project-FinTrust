@@ -8,29 +8,23 @@ import './LoanDetails.css';
 const LoanDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user, getLoanDetails, deleteLoan, updateLoan, addRepayment, getRepaymentsByLoan, calculateOutstandingAmount } = useLoan();
-    const [loan, setLoan] = useState(null);
+    const { user, loans, deleteLoan, updateLoan, addRepayment, getLoanDetails, getRepaymentsByLoan, calculateOutstandingAmount } = useLoan();
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showPaymentForm, setShowPaymentForm] = useState(false);
-    const [outstandingAmount, setOutstandingAmount] = useState(0);
+
+    // Reactively compute loan data from context state
+    const loan = getLoanDetails(id);
+    const outstandingAmount = calculateOutstandingAmount(id);
 
     useEffect(() => {
-        const loanData = getLoanDetails(id);
-        if (loanData) {
-            setLoan(loanData);
-            setOutstandingAmount(calculateOutstandingAmount(id));
-        } else {
+        if (!loan && !showDeleteModal) {
             navigate('/loans');
         }
-    }, [id, getLoanDetails, calculateOutstandingAmount, navigate]);
+    }, [loan, navigate, showDeleteModal]);
 
     const handleAddPayment = async (paymentData) => {
         const result = await addRepayment(id, paymentData);
         if (result.success) {
-            // Refresh loan data
-            const updatedLoan = getLoanDetails(id);
-            setLoan(updatedLoan);
-            setOutstandingAmount(calculateOutstandingAmount(id));
             setShowPaymentForm(false);
         } else {
             throw new Error(result.error);
@@ -46,17 +40,14 @@ const LoanDetails = () => {
 
     const markAsCompleted = async () => {
         await updateLoan(id, { status: 'completed', amountPaid: loan.amount });
-        setLoan({ ...loan, status: 'completed', amountPaid: loan.amount });
     };
 
     const handleApprove = async () => {
         await updateLoan(id, { status: 'active' });
-        setLoan({ ...loan, status: 'active' });
     };
 
     const handleReject = async () => {
         await updateLoan(id, { status: 'rejected' });
-        setLoan({ ...loan, status: 'rejected' });
     };
 
     if (!loan || !user) return <div>Loading...</div>;

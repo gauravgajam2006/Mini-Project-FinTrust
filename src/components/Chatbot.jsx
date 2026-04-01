@@ -2,14 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import './Chatbot.css';
 
-// Initialize Gemini
-// Note: In a production app, the key should be an environment variable.
-// I'm using the provided key-like string, but this looks like a Project ID.
-// If this fails, the user needs to provide a valid API key (starts with AIza...)
-const API_KEY = "AIzaSyD7GIORKimZnJYgyFWB4UzXl1gDlIbGdiQ";
+// Initialize Gemini from environment variable
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 
 // Only initialize if we have a key
-const genAI = new GoogleGenerativeAI(API_KEY);
+const genAI = API_KEY ? new GoogleGenerativeAI(API_KEY) : null;
 
 const SYSTEM_INSTRUCTION = `
 You are FinBot, the intelligent assistant for Fintrust, a simplified peer-to-peer loan management application.
@@ -66,6 +63,10 @@ const Chatbot = () => {
         setIsLoading(true);
 
         try {
+            if (!genAI) {
+                throw new Error('AI assistant is not configured. Please set VITE_GEMINI_API_KEY.');
+            }
+
             // Using "gemini-flash-latest" alias to target the current efficient free-tier capable model
             const model = genAI.getGenerativeModel({
                 model: "gemini-flash-latest"

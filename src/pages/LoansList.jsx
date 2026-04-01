@@ -6,15 +6,15 @@ import { exportLoansToCSV } from '../utils/exportUtils';
 import './LoansList.css';
 
 const LoansList = () => {
-    const { getLoansByUser } = useLoan();
+    const { loans, getLoansByUser } = useLoan();
     const [filter, setFilter] = useState('all');
     const [searchTerm, setSearchTerm] = useState('');
 
-    const loans = getLoansByUser(filter);
+    const filteredByType = getLoansByUser(filter);
 
-    const filteredLoans = loans.filter(loan => {
+    const filteredLoans = filteredByType.filter(loan => {
         const personName = loan.type === 'lent' ? loan.borrowerName : loan.lenderName;
-        return personName.toLowerCase().includes(searchTerm.toLowerCase());
+        return personName?.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
     return (

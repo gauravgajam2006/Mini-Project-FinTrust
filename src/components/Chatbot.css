@@ -244,3 +244,44 @@
     cursor: not-allowed;
     opacity: 0.5;
 }
+
+/* Mobile Responsive Fixes */
+@media (max-width: 768px) {
+    .chatbot-container {
+        bottom: 1rem;
+        right: 1rem;
+    }
+    
+    .chatbot-toggle {
+        width: 48px;
+        height: 48px;
+    }
+    
+    .chatbot-icon {
+        font-size: 1.4rem;
+    }
+    
+    .chat-window {
+        width: calc(100vw - 2rem);
+        height: calc(100vh - 120px);
+        right: -0.5rem;
+        bottom: 64px;
+    }
+}
+
+@media (max-width: 480px) {
+    .chatbot-container {
+        bottom: 0.75rem;
+        right: 0.75rem;
+    }
+    
+    .chatbot-toggle {
+        width: 44px;
+        height: 44px;
+    }
+    
+    .chat-window {
+        width: calc(100vw - 1.5rem);
+        right: -0.25rem;
+    }
+}

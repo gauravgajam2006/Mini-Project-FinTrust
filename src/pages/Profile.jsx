@@ -102,7 +102,7 @@ const Profile = () => {
               <div className="stat-box">
                 <span className="stat-icon">💰</span>
                 <div className="stat-info">
-                  <span className="stat-value">{stats.overview.totalLoans}</span>
+                  <span className="stat-value">{stats.overview.activeLoans + stats.overview.completedLoans + stats.overview.overdueLoans}</span>
                   <span className="stat-title">Total Loans</span>
                 </div>
               </div>

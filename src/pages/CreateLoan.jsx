@@ -86,9 +86,6 @@ const CreateLoan = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        console.log('Form submitted');
-        console.log('Form data:', formData);
-        console.log('User:', user);
 
         // Adjust names based on type
         const loanData = {
@@ -117,13 +114,11 @@ const CreateLoan = () => {
             // borrowerName and borrowerEmail are already in formData
         }
 
-        console.log('Loan data before validation:', loanData);
 
         // Validate
         const validation = validateLoanData(loanData);
 
         if (!validation.isValid) {
-            console.log('Validation failed:', validation.errors);
             setErrors(validation.errors);
             return;
         }
@@ -134,10 +129,8 @@ const CreateLoan = () => {
             return;
         }
 
-        console.log('Validation passed, creating loan...');
         setIsSubmitting(true);
         const result = await createLoan(loanData);
-        console.log('Create loan result:', result);
 
         if (result.success) {
             toast.success('Loan created successfully!');

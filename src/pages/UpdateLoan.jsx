@@ -175,7 +175,8 @@ const UpdateLoan = () => {
                                     value={formData.repaymentSchedule}
                                     onChange={handleChange}
                                 >
-                                    <option value="lump-sum">Lump Sum</option>
+                                    <option value="lump_sum">Lump Sum (One-time payment)</option>
+                                    <option value="emi">EMI (Equated Monthly Installment)</option>
                                     <option value="monthly">Monthly</option>
                                     <option value="weekly">Weekly</option>
                                 </select>

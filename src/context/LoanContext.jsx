@@ -100,6 +100,8 @@ export const LoanProvider = ({ children }) => {
     // Helper function to map database fields to app format
     const mapLoanFromDB = (dbLoan) => ({
         id: dbLoan.id,
+        user_id: dbLoan.user_id,
+        created_by: dbLoan.created_by,
         type: dbLoan.type,
         amount: parseFloat(dbLoan.amount),
         amountPaid: parseFloat(dbLoan.amount_paid) || 0,
@@ -117,6 +119,34 @@ export const LoanProvider = ({ children }) => {
         createdAt: new Date(dbLoan.created_at),
         payments: dbLoan.payments || []
     });
+
+    // GET SINGLE LOAN DETAILS
+    const getLoanDetails = (loanId) => {
+        return loans.find(l => l.id === loanId) || null;
+    };
+
+    // GET LOANS FILTERED BY TYPE/STATUS
+    const getLoansByUser = (filter = 'all') => {
+        if (filter === 'all') return loans;
+        if (filter === 'lent' || filter === 'borrowed') {
+            return loans.filter(l => l.type === filter);
+        }
+        // status-based filter
+        return loans.filter(l => l.status === filter);
+    };
+
+    // GET REPAYMENTS FOR A SPECIFIC LOAN
+    const getRepaymentsByLoan = (loanId) => {
+        const loan = loans.find(l => l.id === loanId);
+        return loan?.payments || [];
+    };
+
+    // CALCULATE OUTSTANDING AMOUNT
+    const calculateOutstandingAmount = (loanId) => {
+        const loan = loans.find(l => l.id === loanId);
+        if (!loan) return 0;
+        return Math.max(0, loan.amount - loan.amountPaid);
+    };
 
     // FETCH LOANS
     const fetchLoans = async () => {
@@ -296,6 +326,7 @@ export const LoanProvider = ({ children }) => {
 
     // DELETE LOAN
     const deleteLoan = async (loanId) => {
+        if (!user) return { success: false, error: 'User not authenticated' };
         setLoading(true);
         try {
             const { error } = await supabase.from('loans').delete().eq('id', loanId);
@@ -411,7 +442,11 @@ export const LoanProvider = ({ children }) => {
 
     // UPDATE LOAN STATUS
     const updateLoanStatus = async (loanId) => {
-        const loan = loans.find(l => l.id === loanId);
+        // Re-read fresh loan data to avoid stale closure
+        const freshLoans = await new Promise(resolve => {
+            setLoans(prev => { resolve(prev); return prev; });
+        });
+        const loan = freshLoans.find(l => l.id === loanId);
         if (!loan) return { success: false };
 
         let newStatus = loan.status;
@@ -447,18 +482,21 @@ export const LoanProvider = ({ children }) => {
         }
     };
 
-    // GAMIFICATION logic (simplified to sync with DB)
+    // GAMIFICATION logic (debounced sync with DB)
     useEffect(() => {
-        if (user && isAuthenticated) {
-            const saveGamification = async () => {
+        if (!user || !isAuthenticated) return;
+        const timer = setTimeout(async () => {
+            try {
                 await supabase
                     .from('profiles')
                     .update({ gamification })
                     .eq('id', user.id);
-            };
-            saveGamification();
-        }
-    }, [gamification]);
+            } catch (err) {
+                console.error('Failed to save gamification:', err);
+            }
+        }, 1000); // 1s debounce to avoid rapid writes
+        return () => clearTimeout(timer);
+    }, [gamification, user, isAuthenticated]);
 
     const updateStatsOnLoanCreate = () => {
         setGamification(prev => ({
@@ -527,7 +565,8 @@ export const LoanProvider = ({ children }) => {
         <LoanContext.Provider value={{
             loans, user, loading, isAuthenticated, activities, gamification,
             fetchLoans, fetchActivities, createLoan, updateLoan, deleteLoan,
-            login, signup, logout, loginWithGoogle, addRepayment, getDashboardStats
+            login, signup, logout, loginWithGoogle, addRepayment, getDashboardStats,
+            getLoanDetails, getLoansByUser, getRepaymentsByLoan, calculateOutstandingAmount
         }}>
             {children}
         </LoanContext.Provider>
