@@ -92,12 +92,16 @@ const LoanDetails = () => {
                             📨 Remind
                         </button>
                     )}
-                    <Link to={`/loan/${id}/edit`} className="btn-primary">
-                        ✏️ Edit
-                    </Link>
-                    <button onClick={() => setShowDeleteModal(true)} className="btn-danger">
-                        🗑️ Delete
-                    </button>
+                    {loan.user_id === user.id && (
+                        <Link to={`/loan/${id}/edit`} className="btn-primary">
+                            ✏️ Edit
+                        </Link>
+                    )}
+                    {loan.user_id === user.id && (
+                        <button onClick={() => setShowDeleteModal(true)} className="btn-danger">
+                            🗑️ Delete
+                        </button>
+                    )}
                 </div>
             </div>
 

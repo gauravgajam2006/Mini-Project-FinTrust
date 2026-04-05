@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLoan } from '../context/LoanContext';
 import GamificationWidget from '../components/GamificationWidget';
+import TrustScoreCard from '../components/TrustScoreCard';
 import './Profile.css';
 
 const Profile = () => {
@@ -96,6 +97,8 @@ const Profile = () => {
           <div className="profile-card gamification-wrapper">
             <GamificationWidget />
           </div>
+
+          <TrustScoreCard score={gamificationData?.trustScore || 50} />
         </div>
 
         {/* Right Column - Stats & Badges */}

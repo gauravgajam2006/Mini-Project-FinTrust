@@ -594,12 +594,21 @@ export const LoanProvider = ({ children }) => {
         if (!user) return { success: false, error: 'User not authenticated' };
         setLoading(true);
         try {
-            const { error } = await supabase.from('loans').delete().eq('id', loanId);
+            const { data, error } = await supabase.from('loans').delete().eq('id', loanId).select();
+            
             if (error) throw error;
+            
+            if (!data || data.length === 0) {
+                // Supabase RLS silently blocked the deletion (0 rows deleted)
+                throw new Error("Permission denied: You can only delete loans you created.");
+            }
+            
             setLoans(prev => prev.filter(loan => loan.id !== loanId));
             return { success: true };
         } catch (error) {
             console.error('Error deleting loan:', error);
+            // Revert state just in case, though it shouldn't have changed yet
+            toast.error(error.message || 'Failed to delete loan.');
             return { success: false, error: error.message };
         } finally {
             setLoading(false);
