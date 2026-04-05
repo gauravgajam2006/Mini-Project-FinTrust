@@ -170,6 +170,13 @@
     font-weight: bold;
     border: 2px solid var(--bg-color);
     margin-left: -10px;
+    overflow: hidden;
+}
+
+.avatars-group .avatar .avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .avatars-group .avatar:first-child {

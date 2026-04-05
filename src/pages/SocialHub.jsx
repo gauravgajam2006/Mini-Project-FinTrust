@@ -244,7 +244,13 @@ const SocialHub = () => {
                                 {searchResults.map(result => (
                                     <div key={result.id} className="user-list-item">
                                         <div className="user-info">
-                                            <div className="user-avatar">{result.name?.charAt(0) || 'U'}</div>
+                                            <div className="user-avatar">
+                                                {result.avatar_url ? (
+                                                    <img src={result.avatar_url} alt={result.name} className="avatar-img" />
+                                                ) : (
+                                                    result.name?.charAt(0) || 'U'
+                                                )}
+                                            </div>
                                             <div>
                                                 <div className="user-name">{result.name}</div>
                                                 <div className="user-email">{result.email}</div>

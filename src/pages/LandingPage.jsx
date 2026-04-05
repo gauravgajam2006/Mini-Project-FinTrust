@@ -1,10 +1,31 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabase';
 import './LandingPage.css';
 
 const LandingPage = () => {
     const navigate = useNavigate();
+    const [displayUsers, setDisplayUsers] = useState([]);
+
+    useEffect(() => {
+        const fetchDisplayUsers = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('name, avatar_url')
+                    .limit(5);
+                
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    setDisplayUsers(data);
+                }
+            } catch (err) {
+                console.error("Error fetching display users:", err);
+            }
+        };
+        fetchDisplayUsers();
+    }, []);
 
     // Animation variants
     const fadeIn = {
@@ -72,9 +93,23 @@ const LandingPage = () => {
 
                     <motion.div className="social-proof" variants={fadeIn}>
                         <div className="avatars-group">
-                            <div className="avatar">A</div>
-                            <div className="avatar">K</div>
-                            <div className="avatar">P</div>
+                            {displayUsers.length > 0 ? (
+                                displayUsers.map((u, i) => (
+                                    <div key={i} className="avatar">
+                                        {u.avatar_url ? (
+                                            <img src={u.avatar_url} alt={u.name} className="avatar-img" />
+                                        ) : (
+                                            u.name?.charAt(0) || 'U'
+                                        )}
+                                    </div>
+                                ))
+                            ) : (
+                                <>
+                                    <div className="avatar">A</div>
+                                    <div className="avatar">K</div>
+                                    <div className="avatar">P</div>
+                                </>
+                            )}
                         </div>
                         <span>Join 10,000+ users tracking loans peacefully</span>
                     </motion.div>

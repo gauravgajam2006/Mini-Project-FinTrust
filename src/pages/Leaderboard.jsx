@@ -25,6 +25,7 @@ const Leaderboard = () => {
                         id: profile.id,
                         name: profile.name || 'Anonymous',
                         email: profile.email,
+                        avatar_url: profile.avatar_url,
                         xp: gamification.points || Math.floor(Math.random() * 5000) + 100,
                         speedScore: gamification.stats?.onTimePayments > 0 
                             ? ((gamification.stats.onTimePayments / gamification.stats.totalPayments) * 10).toFixed(1)
@@ -73,7 +74,13 @@ const Leaderboard = () => {
                                             {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `#${index + 1}`}
                                         </td>
                                         <td className="user-cell">
-                                            <div className="user-avatar-small">{user.name?.charAt(0) || 'U'}</div>
+                                            <div className="user-avatar-small">
+                                                {user.avatar_url ? (
+                                                    <img src={user.avatar_url} alt={user.name} className="avatar-img-small" />
+                                                ) : (
+                                                    user.name?.charAt(0) || 'U'
+                                                )}
+                                            </div>
                                             <div className="user-name-cell">
                                                 {user.name}
                                             </div>

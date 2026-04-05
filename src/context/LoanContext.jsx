@@ -69,6 +69,7 @@ export const LoanProvider = ({ children }) => {
                 id: supabaseUser.id,
                 email: supabaseUser.email,
                 name: profile?.name || supabaseUser.user_metadata?.name || supabaseUser.email.split('@')[0],
+                avatar_url: profile?.avatar_url || supabaseUser.user_metadata?.avatar_url || '',
                 phone: profile?.phone || '',
                 aadhaar: profile?.aadhaar || '',
                 ...supabaseUser

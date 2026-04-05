@@ -68,7 +68,11 @@ const Profile = () => {
         <div className="profile-info-column">
           <div className="profile-card user-card neon-border">
             <div className="user-avatar-large">
-              {profileData.name.charAt(0).toUpperCase()}
+              {user?.avatar_url ? (
+                <img src={user.avatar_url} alt={profileData.name} className="avatar-img" />
+              ) : (
+                profileData.name.charAt(0).toUpperCase()
+              )}
             </div>
             <h2>{profileData.name}</h2>
             <p className="user-email">{profileData.email}</p>
