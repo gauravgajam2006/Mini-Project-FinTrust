@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useLoan } from '../context/LoanContext';
 import { formatCurrency, formatDate, getDaysUntilDue } from '../utils/loanValidation';
@@ -272,21 +273,29 @@ const LoanDetails = () => {
             </div>
 
             {/* Delete Modal */}
-            {showDeleteModal && (
-                <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <h3>Delete Loan?</h3>
-                        <p>Are you sure you want to delete this loan? This action cannot be undone.</p>
+            {showDeleteModal && createPortal(
+                <div className="modal-overlay fade-in" onClick={() => setShowDeleteModal(false)}>
+                    <div className="modal-content scale-in premium-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="modal-warning-icon">
+                            ⚠️
+                        </div>
+                        <h3>Delete Loan Record?</h3>
+                        <p className="modal-warning-text">
+                            Are you absolutely sure you want to delete this loan? 
+                            <br/><br/>
+                            <strong style={{ color: '#EF4444' }}>This action is permanent and cannot be undone.</strong> All associated payment history will also be removed.
+                        </p>
                         <div className="modal-actions">
-                            <button onClick={() => setShowDeleteModal(false)} className="btn-secondary">
+                            <button onClick={() => setShowDeleteModal(false)} className="btn-secondary modal-btn cancel-btn">
                                 Cancel
                             </button>
-                            <button onClick={handleDelete} className="btn-danger">
-                                Delete
+                            <button onClick={handleDelete} className="btn-danger modal-btn confirm-btn">
+                                Yes, Delete It
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );
