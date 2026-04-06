@@ -8,4 +8,4 @@ Disallow: /create-loan
 Disallow: /leaderboard
 Disallow: /social
 
-Sitemap: https://fintrust-demo.vercel.app/sitemap.xml
+Sitemap: https://mini-project-fin-trust.vercel.app/sitemap.xml
