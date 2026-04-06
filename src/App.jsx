@@ -3,10 +3,11 @@ import { supabase } from './supabase';
 import { lazy, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
-import { Toaster } from 'react-hot-toast';
+import { toast, Toaster } from 'react-hot-toast';
 import { LoanProvider, useLoan } from './context/LoanContext';
 import Layout from './components/Layout';
 import PageTransition from './components/PageTransition';
+import ErrorBoundary from './components/ErrorBoundary';
 
 // Lazy loaded components for code splitting
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -73,6 +74,19 @@ const PublicRoute = ({ children }) => {
 const AnimatedRoutes = () => {
   const location = useLocation();
 
+  useEffect(() => {
+    const handleOnline = () => toast.success('You are back online!');
+    const handleOffline = () => toast.error('You are offline. Some features may not work.');
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   return (
     <AnimatePresence mode="wait">
       <Suspense fallback={<LoadingSpinner />}>
@@ -100,14 +114,17 @@ const AnimatedRoutes = () => {
 
 function App() {
   return (
-    <Router>
-      <LoanProvider>
-        <Toaster position="top-right" />
-        <Chatbot />
-        <AnimatedRoutes />
-      </LoanProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <LoanProvider>
+          <Toaster position="top-right" />
+          <Chatbot />
+          <AnimatedRoutes />
+        </LoanProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
 
 export default App;
+
