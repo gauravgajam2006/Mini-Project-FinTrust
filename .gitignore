@@ -1,3 +1,22 @@
+# Node & NPM
 node_modules
-FinTrust.zip
+npm-debug.log*
+package-lock.json
+
+# Build Output
+dist
+dist-ssr
+*.zip
+
+# Environment & Secrets
 .env
+.env.local
+.env.*
+!.env.example
+
+# Vercel & Deployment
+.vercel
+
+# System Files
+.DS_Store
+Thumbs.db
