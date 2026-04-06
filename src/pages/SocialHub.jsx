@@ -218,8 +218,8 @@ const SocialHub = () => {
                             </button>
                         </form>
 
-                        <div className="contacts-import-section" style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid #E5E7EB' }}>
-                            <h4 style={{ marginBottom: '12px', fontSize: '14px', color: '#4B5563' }}>Other ways to connect</h4>
+                        <div className="contacts-import-section" style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
+                            <h4 style={{ marginBottom: '12px', fontSize: '14px', color: 'var(--color-text-medium)' }}>Other ways to connect</h4>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                 <button onClick={importFromContacts} className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
                                     📱 Import from Phone Contacts
@@ -230,7 +230,7 @@ const SocialHub = () => {
                             </div>
 
                             {showManualForm && (
-                                <form onSubmit={handleManualAdd} className="manual-add-form" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: '#F9FAFB', padding: '16px', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
+                                <form onSubmit={handleManualAdd} className="manual-add-form" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--color-surface-hover)', padding: '16px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                                     <input type="text" placeholder="Contact Name" value={manualName} onChange={e => setManualName(e.target.value)} required className="form-input" style={{ width: '100%', boxSizing: 'border-box' }} />
                                     <input type="text" placeholder="Phone Number or Email" value={manualPhone} onChange={e => setManualPhone(e.target.value)} required className="form-input" style={{ width: '100%', boxSizing: 'border-box' }} />
                                     <button type="submit" className="btn-primary" style={{ width: '100%' }}>Add to Network</button>

@@ -22,11 +22,11 @@
 }
 
 .leaderboard-table-wrapper {
-    background: white;
+    background: var(--color-surface);
     border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    box-shadow: var(--shadow-md);
     overflow: hidden;
-    border: 1px solid #F3F4F6;
+    border: 1px solid var(--color-border);
 }
 
 .leaderboard-table {
@@ -35,20 +35,20 @@
 }
 
 .leaderboard-table th {
-    background: #F9FAFB;
+    background: var(--color-background);
     padding: 16px;
     text-align: left;
     font-size: 14px;
     font-weight: 600;
-    color: #4B5563;
+    color: var(--color-text-medium);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    border-bottom: 1px solid #E5E7EB;
+    border-bottom: 1px solid var(--color-border);
 }
 
 .leaderboard-table td {
     padding: 16px;
-    border-bottom: 1px solid #F3F4F6;
+    border-bottom: 1px solid var(--color-border);
     vertical-align: middle;
 }
 
@@ -59,7 +59,7 @@
 .rank-cell {
     font-size: 24px;
     font-weight: bold;
-    color: #6B7280;
+    color: var(--color-text-light);
     width: 80px;
     text-align: center;
 }
@@ -74,12 +74,12 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: #E5E7EB;
+    background: var(--color-surface-hover);
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: bold;
-    color: #4B5563;
+    color: var(--color-text-medium);
     overflow: hidden;
 }
 
@@ -91,11 +91,11 @@
 
 .user-name-cell {
     font-weight: 600;
-    color: #1F2937;
+    color: var(--color-text-dark);
 }
 
 .top-1 {
-    background: linear-gradient(to right, #FFFBEB, white);
+    background: linear-gradient(to right, rgba(245, 158, 11, 0.1), var(--color-surface));
 }
 
 .top-1 .user-avatar-small {
@@ -104,11 +104,11 @@
 }
 
 .top-2 {
-    background: linear-gradient(to right, #F3F4F6, white);
+    background: linear-gradient(to right, rgba(100, 116, 139, 0.1), var(--color-surface));
 }
 
 .top-3 {
-    background: linear-gradient(to right, #FFF7ED, white);
+    background: linear-gradient(to right, rgba(249, 115, 22, 0.05), var(--color-surface));
 }
 
 .speed-cell {
@@ -118,12 +118,12 @@
 .speed-text {
     font-size: 14px;
     font-weight: 600;
-    color: #059669;
+    color: var(--color-success);
 }
 
 .xp-badge {
-    background: #DBEAFE;
-    color: #1D4ED8;
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--color-primary);
     padding: 6px 12px;
     border-radius: 20px;
     font-weight: 700;
@@ -134,6 +134,6 @@
 .loading-state {
     text-align: center;
     padding: 40px;
-    color: #6B7280;
+    color: var(--color-text-medium);
     font-size: 16px;
 }
