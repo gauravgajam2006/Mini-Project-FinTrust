@@ -6,7 +6,6 @@ import { AnimatePresence } from 'framer-motion';
 import { Toaster } from 'react-hot-toast';
 import { LoanProvider, useLoan } from './context/LoanContext';
 import Layout from './components/Layout';
-import CustomCursor from './components/CustomCursor';
 import PageTransition from './components/PageTransition';
 
 // Lazy loaded components for code splitting
@@ -100,14 +99,10 @@ const AnimatedRoutes = () => {
 };
 
 function App() {
-  // Detect touch device for custom cursor
-  const isTouchDevice = typeof window !== 'undefined' && ('ontouchstart' in window || navigator.maxTouchPoints > 0);
-
   return (
     <Router>
       <LoanProvider>
         <Toaster position="top-right" />
-        {!isTouchDevice && <CustomCursor />}
         <Chatbot />
         <AnimatedRoutes />
       </LoanProvider>
