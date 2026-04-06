@@ -3,9 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '../supabase';
 import './LandingPage.css';
+import { useTheme } from '../context/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 const LandingPage = () => {
     const navigate = useNavigate();
+    const { theme } = useTheme();
     const [displayUsers, setDisplayUsers] = useState([]);
 
     useEffect(() => {
@@ -50,6 +53,7 @@ const LandingPage = () => {
                     <span className="logo-text gradient-text">FinTrust</span>
                 </div>
                 <div className="nav-actions">
+                    <ThemeToggle />
                     <button className="btn-secondary" onClick={() => navigate('/auth')}>Log In</button>
                     <button className="btn-primary" onClick={() => navigate('/auth')}>Sign Up Free</button>
                 </div>

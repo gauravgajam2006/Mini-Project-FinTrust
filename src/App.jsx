@@ -95,16 +95,20 @@ const AnimatedRoutes = () => {
   );
 };
 
+import { ThemeProvider } from './context/ThemeContext';
+
 function App() {
   return (
     <ErrorBoundary>
-      <Router>
-        <LoanProvider>
-          <Toaster position="top-right" />
-          <Chatbot />
-          <AnimatedRoutes />
-        </LoanProvider>
-      </Router>
+      <ThemeProvider>
+        <Router>
+          <LoanProvider>
+            <Toaster position="top-right" />
+            <Chatbot />
+            <AnimatedRoutes />
+          </LoanProvider>
+        </Router>
+      </ThemeProvider>
     </ErrorBoundary>
   );
 }
