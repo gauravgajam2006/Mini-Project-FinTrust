@@ -6,18 +6,63 @@
     <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <meta name="theme-color" content="#6366f1" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Primary Meta Tags -->
+    <title>FinTrust - Manage Loans with Trust</title>
+    <meta name="title" content="FinTrust - Manage Loans with Trust" />
     <meta name="description" content="FinTrust - Track informal loans, send polite reminders, and maintain trust in your personal lending relationships" />
     <meta name="keywords" content="informal lending, loan tracker, trust-based lending, personal finance, loan management" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://mini-project-fin-trust.vercel.app/" />
+    <meta property="og:title" content="FinTrust - Manage Loans with Trust" />
+    <meta property="og:description" content="Track informal loans, send polite reminders, and maintain trust in your personal lending relationships." />
+    <meta property="og:image" content="/og-image.png" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://mini-project-fin-trust.vercel.app/" />
+    <meta property="twitter:title" content="FinTrust - Manage Loans with Trust" />
+    <meta property="twitter:description" content="Track informal loans, send polite reminders, and maintain trust in your personal lending relationships." />
+    <meta property="twitter:image" content="/og-image.png" />
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    
-    <title>FinTrust - Manage Loans with Trust</title>
-    <script type="module" crossorigin src="/assets/index-Be3iexrC.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-DQcqlTm8.css">
-  <link rel="manifest" href="/manifest.webmanifest"><script id="vite-plugin-pwa:register-sw" src="/registerSW.js"></script></head>
-  <body>
-    <div id="root"></div>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="/assets/index-CxS_N4G9.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-Ca1tDgxS.css">
+  <link rel="manifest" href="/manifest.webmanifest"></head>
+  <body style="margin: 0; padding: 0; background-color: #0f172a;">
+    <div id="root">
+      <!-- Initial Loading Screen before React Hydration -->
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background-color: #0f172a; gap: 24px;">
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 60px;">
+          <div class="initial-loading-bar" style="animation-delay: 0s;"></div>
+          <div class="initial-loading-bar" style="animation-delay: 0.15s;"></div>
+          <div class="initial-loading-bar" style="animation-delay: 0.3s;"></div>
+          <div class="initial-loading-bar" style="animation-delay: 0.45s;"></div>
+          <div class="initial-loading-bar" style="animation-delay: 0.6s;"></div>
+        </div>
+        <p style="color: #94a3b8; font-family: 'Inter', sans-serif; letter-spacing: 8px; font-size: 1rem; font-weight: 600; text-transform: uppercase; margin-left: 8px; margin-top: 0; margin-bottom: 0;">
+          Loading
+        </p>
+        <style>
+          .initial-loading-bar {
+            width: 6px;
+            background-color: #FF00E5;
+            border-radius: 10px;
+            height: 20%;
+            animation: initialWaveBounce 1.2s cubic-bezier(0.85, 0.25, 0.37, 0.85) infinite;
+          }
+          @keyframes initialWaveBounce {
+            0%, 100% { height: 20%; background-color: #4f46e5; opacity: 0.5; }
+            50% { height: 100%; background-color: #FF00E5; opacity: 1; box-shadow: 0 0 15px #FF00E5; }
+          }
+        </style>
+      </div>
+    </div>
   </body>
 </html>
+
