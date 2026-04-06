@@ -6,7 +6,6 @@ import { exportLoansToCSV } from '../utils/exportUtils';
 import { Link } from 'react-router-dom';
 import ReminderModal from '../components/ReminderModal';
 import GamificationDashboard from '../components/GamificationDashboard';
-import AnalyticsDashboard from '../components/AnalyticsDashboard';
 import './Dashboard.css';
 
 const Dashboard = () => {
@@ -126,42 +125,6 @@ const Dashboard = () => {
 
             {/* Gamification Dashboard */}
             <GamificationDashboard />
-
-            {/* Analytics Dashboard */}
-            <AnalyticsDashboard />
-
-            {/* Stats Cards - Updated for outstandings and status */}
-            <div className="stats-grid">
-                <div className="stat-card">
-                    <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}>💸</div>
-                    <div className="stat-content">
-                        <div className="stat-label">Total Receivable (Active)</div>
-                        <div className="stat-value">{formatCurrency(stats.overview.lentOutstanding)}</div>
-                        <div className="stat-meta">{stats.lending.activeCount} active loans</div>
-                    </div>
-                </div>
-
-                <div className="stat-card">
-                    <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #EF4444, #DC2626)' }}>💰</div>
-                    <div className="stat-content">
-                        <div className="stat-label">Total Owed (Active)</div>
-                        <div className="stat-value">{formatCurrency(stats.overview.borrowedOutstanding)}</div>
-                        <div className="stat-meta">{stats.borrowing.activeCount} active loans</div>
-                    </div>
-                </div>
-
-                <div className="stat-card">
-                    <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #3B82F6, #60A5FA)' }}>📊</div>
-                    <div className="stat-content">
-                        <div className="stat-label">Status at a Glance</div>
-                        <div className="status-glance-row">
-                            <span className="sg-item sg-active">{stats.overview.activeLoans} Active</span>
-                            <span className="sg-item sg-overdue">{stats.overview.overdueLoans} Overdue</span>
-                            <span className="sg-item sg-completed">{stats.overview.completedLoans} Done</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             {/* Segmented Activity */}
             <div className="dashboard-lists-grid">
