@@ -536,7 +536,7 @@
 }
 
 @media (max-width: 1024px) {
-    .details-grid-main {
+    .details-grid {
         grid-template-columns: 1fr;
     }
 }
