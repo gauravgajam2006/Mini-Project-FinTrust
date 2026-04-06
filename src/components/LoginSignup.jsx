@@ -178,10 +178,10 @@ const LoginSignup = () => {
 
                         {/* Progress Indicators for Signup */}
                         {!isLogin && (
-                            <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', justifyContent: 'center' }}>
-                                <div style={{ height: '4px', width: '30px', borderRadius: '4px', background: signupStep >= 1 ? '#2563EB' : '#E5E7EB' }}></div>
-                                <div style={{ height: '4px', width: '30px', borderRadius: '4px', background: signupStep >= 2 ? '#2563EB' : '#E5E7EB' }}></div>
-                                <div style={{ height: '4px', width: '30px', borderRadius: '4px', background: signupStep >= 3 ? '#2563EB' : '#E5E7EB' }}></div>
+                            <div className="signup-progress">
+                                <div className={`progress-step ${signupStep >= 1 ? 'active' : ''}`}></div>
+                                <div className={`progress-step ${signupStep >= 2 ? 'active' : ''}`}></div>
+                                <div className={`progress-step ${signupStep >= 3 ? 'active' : ''}`}></div>
                             </div>
                         )}
 
@@ -203,15 +203,7 @@ const LoginSignup = () => {
 
                         <form onSubmit={handleSubmit}>
                             {error && (
-                                <div style={{
-                                    padding: '12px',
-                                    marginBottom: '16px',
-                                    backgroundColor: error.includes('sent') ? '#e7f3ff' : '#fee',
-                                    border: `1px solid ${error.includes('sent') ? '#4a90e2' : '#fcc'}`,
-                                    borderRadius: '8px',
-                                    color: error.includes('sent') ? '#1a5490' : '#c33',
-                                    fontSize: '14px'
-                                }}>
+                                <div className={`auth-alert ${error.includes('sent') ? 'alert-success' : 'alert-error'}`}>
                                     {error}
                                 </div>
                             )}
@@ -367,11 +359,7 @@ const LoginSignup = () => {
                             {!isLogin && signupStep > 1 && (
                                 <button
                                     type="button"
-                                    style={{
-                                        width: '100%', padding: '12px', marginTop: '12px',
-                                        background: 'transparent', border: '1px solid #E5E7EB',
-                                        borderRadius: '8px', color: '#4B5563', cursor: 'pointer', fontWeight: 500
-                                    }}
+                                    className="btn-back"
                                     onClick={() => setSignupStep(signupStep - 1)}
                                 >
                                     Back
