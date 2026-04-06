@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useLoan } from '../context/LoanContext';
 import { formatCurrency, formatDate, getDaysUntilDue } from '../utils/loanValidation';
 import AddPayment from '../components/AddPayment';
+import LoadingSpinner from '../components/LoadingSpinner';
 import './LoanDetails.css';
 
 const LoanDetails = () => {
@@ -51,7 +52,7 @@ const LoanDetails = () => {
         await updateLoan(id, { status: 'rejected' });
     };
 
-    if (!loan || !user) return <div>Loading...</div>;
+    if (!loan || !user) return <LoadingSpinner />;
 
     const personName = loan.type === 'lent' ? loan.borrowerName : loan.lenderName;
     const isReceiver = loan.created_by !== user.id; // Did someone else create this?

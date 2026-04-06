@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useLoan } from '../context/LoanContext';
 import { validateLoanData } from '../utils/loanValidation';
+import LoadingSpinner from '../components/LoadingSpinner';
 import '../pages/CreateLoan.css';
 
 const UpdateLoan = () => {
@@ -78,7 +79,7 @@ const UpdateLoan = () => {
         }
     };
 
-    if (!formData) return <div>Loading...</div>;
+    if (!formData) return <LoadingSpinner />;
 
     return (
         <div className="create-loan">

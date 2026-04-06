@@ -8,6 +8,7 @@ import { LoanProvider, useLoan } from './context/LoanContext';
 import Layout from './components/Layout';
 import PageTransition from './components/PageTransition';
 import ErrorBoundary from './components/ErrorBoundary';
+import LoadingSpinner from './components/LoadingSpinner';
 
 // Lazy loaded components for code splitting
 const LandingPage = lazy(() => import('./pages/LandingPage'));
@@ -21,24 +22,6 @@ const Profile = lazy(() => import('./pages/Profile'));
 const SocialHub = lazy(() => import('./pages/SocialHub'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Chatbot = lazy(() => import('./components/Chatbot'));
-
-// Simple loading spinner component
-const LoadingSpinner = () => (
-    <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        minHeight: '100vh', background: '#0f172a', color: '#94a3b8'
-    }}>
-        <div style={{ textAlign: 'center' }}>
-            <div style={{
-                width: '40px', height: '40px', border: '3px solid #1e293b',
-                borderTop: '3px solid #06b6d4', borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite', margin: '0 auto 12px'
-            }} />
-            <p>Loading FinTrust...</p>
-            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-    </div>
-);
 
 // Simple 404 page
 const NotFoundPage = () => (
@@ -66,7 +49,7 @@ const ProtectedRoute = ({ children }) => {
 // Public Route Component (redirects to dashboard if logged in)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useLoan();
-  if (loading) return <div>Loading...</div>;
+  if (loading) return <LoadingSpinner />;
   return isAuthenticated ? <Navigate to="/dashboard" /> : children;
 };
 
