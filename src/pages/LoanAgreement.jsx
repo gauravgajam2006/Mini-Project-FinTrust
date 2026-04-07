@@ -15,7 +15,6 @@ import {
   fetchAgreementDetails,
   generateAgreementPDF,
   getDocumentSignedURL,
-  trackDownload,
 } from '../utils/agreementUtils';
 import toast from 'react-hot-toast';
 import './LoanAgreement.css';
@@ -340,50 +339,11 @@ const LoanAgreement = () => {
 
       const pdfDoc = generateAgreementPDF(detailsResult.data);
       pdfDoc.save(`FinTrust_Agreement_${agId.slice(0, 8).toUpperCase()}.pdf`);
-      
-      // Determine user role for tracking
-      let userRole = 'other';
-      if (user) {
-        const party = detailsResult.data.parties?.find(p => p.email?.toLowerCase() === user.email?.toLowerCase());
-        if (party) userRole = party.role;
-        else if (detailsResult.data.borrower_id === user.id) userRole = 'borrower';
-        else if (detailsResult.data.lender_id === user.id) userRole = 'lender';
-      }
-
-      await trackDownload(agId, userRole, 'pdf');
-
       toast.dismiss('dl-pdf');
-      toast.success('PDF downloaded successfully!');
+      toast.success('PDF downloaded!');
     } catch (error) {
       toast.dismiss('dl-pdf');
       toast.error('PDF generation failed');
-    }
-  };
-
-  const handlePreviewPDF = async (agId) => {
-    try {
-      toast.loading('Generating preview...', { id: 'preview-pdf' });
-      const detailsResult = await fetchAgreementDetails(agId);
-      if (!detailsResult.success) throw new Error('Failed to fetch agreement');
-
-      const pdfDoc = generateAgreementPDF(detailsResult.data);
-      const pdfUrl = pdfDoc.output('bloburl');
-      window.open(pdfUrl, '_blank');
-      
-      // Track preview as a download_type='preview'
-      let userRole = 'other';
-      if (user) {
-        const party = detailsResult.data.parties?.find(p => p.email?.toLowerCase() === user.email?.toLowerCase());
-        if (party) userRole = party.role;
-        else if (detailsResult.data.borrower_id === user.id) userRole = 'borrower';
-        else if (detailsResult.data.lender_id === user.id) userRole = 'lender';
-      }
-      await trackDownload(agId, userRole, 'preview');
-
-      toast.dismiss('preview-pdf');
-    } catch (error) {
-      toast.dismiss('preview-pdf');
-      toast.error('Preview generation failed');
     }
   };
 
@@ -766,28 +726,7 @@ const LoanAgreement = () => {
                       <RiskScoreDisplay assessment={selectedAgreement.risk_assessment} />
                     </>
                   )}
-                  {selectedAgreement.downloads && selectedAgreement.downloads.length > 0 && (
-                    <>
-                      <h3 style={{ margin: '1rem 0 0.5rem' }}>Download Activity</h3>
-                      <div className="downloads-list" style={{ fontSize: '0.9rem', maxHeight: '100px', overflowY: 'auto' }}>
-                        {selectedAgreement.downloads.map((d, i) => (
-                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                            <span>
-                              <strong>{d.profiles?.name || 'Unknown User'}</strong> ({d.role})
-                              {d.download_type === 'preview' && <span style={{ marginLeft: 8, fontSize: '0.8rem', color: '#94a3b8' }}>Previewed</span>}
-                            </span>
-                            <span style={{ color: '#94a3b8' }}>
-                              {new Date(d.downloaded_at).toLocaleString('en-IN', { dateStyle: 'short', timeStyle: 'short' })}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                  <div className="detail-actions" style={{ display: 'flex', gap: '10px' }}>
-                    <button className="btn-secondary" onClick={() => handlePreviewPDF(selectedAgreement.id)}>
-                      👁️ Preview PDF
-                    </button>
+                  <div className="detail-actions">
                     <button className="btn-primary" onClick={() => handleDownloadPDF(selectedAgreement.id)}>
                       📥 Download PDF
                     </button>
@@ -846,8 +785,8 @@ const LoanAgreement = () => {
                       )}
                     </div>
                     <div className="ag-card-actions">
-                      <button className="ag-btn ag-btn-view" onClick={() => handlePreviewPDF(ag.id)}>👁️ Preview</button>
-                      <button className="ag-btn ag-btn-pdf" onClick={() => handleDownloadPDF(ag.id)}>📥 Download</button>
+                      <button className="ag-btn ag-btn-view" onClick={() => handleViewDetails(ag.id)}>👁️ Details</button>
+                      <button className="ag-btn ag-btn-pdf" onClick={() => handleDownloadPDF(ag.id)}>📥 PDF</button>
                       
                       {/* Lender approve/reject buttons */}
                       {ag.status === 'pending_lender_review' && isLenderForAgreement(ag) && (
