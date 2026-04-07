@@ -7,7 +7,7 @@
 
 import { supabase } from '../supabase';
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // ============================================================
 // AI FRAUD DETECTION & RISK SCORING
@@ -338,7 +338,7 @@ export function generateAgreementPDF(agreementData) {
     ['Purpose', agreementData.purpose || 'Personal Loan'],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Term', 'Details']],
     body: loanTerms,
@@ -364,7 +364,7 @@ export function generateAgreementPDF(agreementData) {
     ['Address', borrower.address || 'N/A'],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Field', 'Value']],
     body: borrowerDetails,
@@ -390,7 +390,7 @@ export function generateAgreementPDF(agreementData) {
     ['Address', lender.address || 'N/A'],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Field', 'Value']],
     body: lenderDetails,
@@ -422,7 +422,7 @@ export function generateAgreementPDF(agreementData) {
     ['Address', guarantor.address || 'N/A'],
   ];
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: y,
     head: [['Field', 'Value']],
     body: guarantorDetails,
@@ -446,7 +446,7 @@ export function generateAgreementPDF(agreementData) {
     const riskColor = ra.risk_level === 'LOW' ? [16, 185, 129] :
                       ra.risk_level === 'MEDIUM' ? [245, 158, 11] : [239, 68, 68];
 
-    doc.autoTable({
+    autoTable(doc, {
       startY: y,
       head: [['Metric', 'Score']],
       body: [
@@ -966,6 +966,7 @@ export async function completeAgreement(agreementId) {
       if (pdfUrlResult.success) {
         const borrower = agreementData.parties.find(p => p.role === 'borrower');
         const lender = agreementData.parties.find(p => p.role === 'lender');
+        const guarantor = agreementData.parties.find(p => p.role === 'guarantor');
 
         await supabase.functions.invoke('send-agreement-email', {
           body: {
@@ -973,8 +974,10 @@ export async function completeAgreement(agreementId) {
             pdfUrl: pdfUrlResult.url,
             borrowerEmail: borrower?.email,
             lenderEmail: lender?.email,
+            guarantorEmail: guarantor?.email,
             borrowerName: borrower?.full_name,
             lenderName: lender?.full_name,
+            guarantorName: guarantor?.full_name,
             amount: agreementData.principal_amount,
           },
         });
