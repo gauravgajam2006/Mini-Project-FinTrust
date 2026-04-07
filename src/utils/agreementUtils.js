@@ -754,6 +754,13 @@ export async function fetchAgreementDetails(agreementId) {
       .limit(1)
       .single();
 
+    // Fetch downloads
+    const { data: downloads } = await supabase
+      .from('agreement_downloads')
+      .select('*, profiles:user_id(name)')
+      .eq('agreement_id', agreementId)
+      .order('downloaded_at', { ascending: false });
+
     return {
       success: true,
       data: {
@@ -762,6 +769,7 @@ export async function fetchAgreementDetails(agreementId) {
         signatures: signatures || [],
         documents: documents || [],
         risk_assessment: riskAssessment || null,
+        downloads: downloads || [],
       },
     };
   } catch (error) {
@@ -962,23 +970,25 @@ export async function completeAgreement(agreementId) {
 
     // Try to trigger email (optional - depends on edge function)
     try {
-      const pdfUrlResult = await getDocumentSignedURL(uploadResult.path);
-      if (pdfUrlResult.success) {
-        const borrower = agreementData.parties.find(p => p.role === 'borrower');
-        const lender = agreementData.parties.find(p => p.role === 'lender');
+      const guarantor = agreementData.parties.find(p => p.role === 'guarantor');
+      const borrower = agreementData.parties.find(p => p.role === 'borrower');
+      const lender = agreementData.parties.find(p => p.role === 'lender');
+      
+      const pdfBase64 = pdfDoc.output('datauristring').split('base64,')[1];
 
-        await supabase.functions.invoke('send-agreement-email', {
-          body: {
-            agreementId,
-            pdfUrl: pdfUrlResult.url,
-            borrowerEmail: borrower?.email,
-            lenderEmail: lender?.email,
-            borrowerName: borrower?.full_name,
-            lenderName: lender?.full_name,
-            amount: agreementData.principal_amount,
-          },
-        });
-      }
+      await supabase.functions.invoke('send-agreement-email', {
+        body: {
+          agreementId,
+          pdfBase64,
+          borrowerEmail: borrower?.email,
+          lenderEmail: lender?.email,
+          guarantorEmail: guarantor?.email,
+          borrowerName: borrower?.full_name,
+          lenderName: lender?.full_name,
+          guarantorName: guarantor?.full_name,
+          amount: agreementData.principal_amount,
+        },
+      });
     } catch (emailError) {
       console.warn('Email sending failed (non-critical):', emailError);
     }
@@ -991,5 +1001,29 @@ export async function completeAgreement(agreementId) {
   } catch (error) {
     console.error('Error completing agreement:', error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Track an agreement download
+ */
+export async function trackDownload(agreementId, role = 'borrower', downloadType = 'pdf') {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Not authenticated' };
+
+    const { error } = await supabase.from('agreement_downloads').insert([{
+      agreement_id: agreementId,
+      user_id: user.id,
+      role: role,
+      download_type: downloadType,
+      user_agent: navigator.userAgent
+    }]);
+
+    if (error) throw error;
+    return { success: true };
+  } catch (err) {
+    console.error('Tracking download failed', err);
+    return { success: false, error: err.message };
   }
 }
