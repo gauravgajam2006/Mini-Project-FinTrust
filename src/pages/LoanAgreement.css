@@ -512,13 +512,7 @@
   margin-bottom: 0.5rem;
 }
 
-.ag-card-id {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--color-text-light);
-  font-family: monospace;
-  letter-spacing: 0.05em;
-}
+
 
 .agreement-status-badge {
   font-size: 0.65rem;
@@ -630,12 +624,26 @@
   color: #fff;
 }
 
+.ag-card-id {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-medium);
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
 .ag-card-date {
-  position: absolute;
-  top: 1rem;
-  right: 5rem;
   font-size: 0.68rem;
   color: var(--color-text-light);
+  font-family: var(--font-body);
+  font-weight: 500;
+  letter-spacing: 0;
+  opacity: 0.8;
+  border-left: 1px solid var(--color-border);
+  padding-left: 0.75rem;
 }
 
 /* ---- DETAIL MODAL ---- */

@@ -756,7 +756,12 @@ const LoanAgreement = () => {
                     transition={{ delay: idx * 0.08 }}
                   >
                     <div className="ag-card-header">
-                      <div className="ag-card-id">#{ag.id?.slice(0, 8).toUpperCase()}</div>
+                      <div className="ag-card-id">
+                        #{ag.id?.slice(0, 8).toUpperCase()}
+                        <span className="ag-card-date">
+                          {new Date(ag.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                        </span>
+                      </div>
                       {getStatusBadge(ag.status)}
                     </div>
                     <div className="ag-card-body">
@@ -795,9 +800,7 @@ const LoanAgreement = () => {
                         </>
                       )}
                     </div>
-                    <div className="ag-card-date">
-                      {new Date(ag.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
-                    </div>
+
                   </motion.div>
                 ))
               )}
