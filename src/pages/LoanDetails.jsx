@@ -204,9 +204,9 @@ const LoanDetails = () => {
                     )}
 
                     {loan.status === 'active' && isBorrower && (
-                        <div style={{ marginTop: '24px', padding: '16px', background: '#F3F4F6', borderRadius: '8px', border: '1px solid #E5E7EB' }}>
-                            <h4 style={{ marginBottom: '8px', color: '#374151' }}>Finalize Loan</h4>
-                            <p style={{ marginBottom: '12px', fontSize: '14px', color: '#4B5563' }}>To finalize this loan, please add a formal payment record for the remaining balance.</p>
+                        <div className="finalize-loan-box">
+                            <h4>Finalize Loan</h4>
+                            <p>To finalize this loan, please add a formal payment record for the remaining balance.</p>
                             <button onClick={() => {
                                 setShowPaymentForm(true);
                                 window.scrollTo({ top: 0, behavior: 'smooth' });
