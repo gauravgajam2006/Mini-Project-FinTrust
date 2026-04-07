@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLoan } from '../context/LoanContext';
 import { validateLoanData } from '../utils/loanValidation';
+import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
 import './CreateLoan.css';
 
@@ -81,6 +82,26 @@ const CreateLoan = () => {
         // Clear error when user types
         if (errors[name]) {
             setErrors(prev => ({ ...prev, [name]: '' }));
+        }
+    };
+
+    const handleEmailBlur = async (e) => {
+        const email = e.target.value;
+        if (!email || !email.includes('@')) return;
+
+        try {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('name')
+                .eq('email', email.toLowerCase())
+                .single();
+
+            if (profile && profile.name) {
+                setFormData(prev => ({ ...prev, borrowerName: profile.name }));
+                toast.success('Auto-filled registered user details!');
+            }
+        } catch (err) {
+            // User likely not registered, which is fine
         }
     };
 
@@ -215,6 +236,7 @@ const CreateLoan = () => {
                                     name="borrowerEmail"
                                     value={formData.borrowerEmail}
                                     onChange={handleChange}
+                                    onBlur={handleEmailBlur}
                                     placeholder="email@example.com"
                                     className={errors.borrowerEmail ? 'error' : ''}
                                 />
