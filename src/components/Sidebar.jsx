@@ -7,6 +7,7 @@ const Sidebar = () => {
         { path: '/dashboard', icon: '📊', label: 'Dashboard' },
         { path: '/loans', icon: '💰', label: 'My Loans' },
         { path: '/create-loan', icon: '➕', label: 'Create Loan' },
+        { path: '/loan-agreement', icon: '📄', label: 'Agreements' },
         { path: '/social', icon: '👥', label: 'Social Hub' },
         { path: '/leaderboard', icon: '🏆', label: 'Leaderboard' },
         { path: '/profile', icon: '👤', label: 'Profile' },

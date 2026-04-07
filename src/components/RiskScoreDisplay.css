@@ -1,0 +1,308 @@
+/* ============================================================
+   RISK SCORE DISPLAY - Premium Fintech Design
+   ============================================================ */
+
+/* Compact Mode */
+.risk-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem;
+  border: 2px solid;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.risk-compact-score {
+  font-size: 1.3rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+}
+
+.risk-compact-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.risk-compact-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.risk-compact-sub {
+  font-size: 0.7rem;
+  color: var(--color-text-light);
+}
+
+/* Full Display */
+.risk-display {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin: 1rem 0;
+}
+
+.risk-display-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.risk-display-header h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-dark);
+}
+
+.risk-badge {
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1.5px solid;
+}
+
+/* Score Section */
+.risk-score-section {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+}
+
+.risk-ring-container {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.risk-ring-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.risk-ring-number {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: var(--font-heading);
+  line-height: 1;
+}
+
+.risk-ring-label {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+}
+
+/* Breakdown */
+.risk-breakdown {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.risk-breakdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.breakdown-info {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 130px;
+}
+
+.breakdown-icon {
+  font-size: 0.85rem;
+}
+
+.breakdown-label {
+  font-size: 0.8rem;
+  color: var(--color-text-medium);
+  white-space: nowrap;
+}
+
+.breakdown-bar-container {
+  flex: 1;
+  height: 8px;
+  background: var(--color-gray-200);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.breakdown-bar {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+
+.breakdown-score {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  min-width: 28px;
+  text-align: right;
+}
+
+/* Flags */
+.risk-flags {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.risk-flags h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: var(--color-text-dark);
+}
+
+.flags-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flag-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-border);
+}
+
+.flag-item.flag-high {
+  background: rgba(239, 68, 68, 0.05);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.flag-item.flag-medium {
+  background: rgba(245, 158, 11, 0.05);
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.flag-item.flag-low {
+  background: rgba(16, 185, 129, 0.05);
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.flag-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.flag-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.flag-type {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-light);
+}
+
+.flag-message {
+  font-size: 0.82rem;
+  color: var(--color-text-dark);
+}
+
+.flag-severity {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.severity-high {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.severity-medium {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.severity-low {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+/* Recommendations */
+.risk-recommendations {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.risk-recommendations h4 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: var(--color-text-dark);
+}
+
+.risk-recommendations ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.risk-recommendations li {
+  font-size: 0.85rem;
+  color: var(--color-text-medium);
+  padding: 0.35rem 0 0.35rem 1.25rem;
+  position: relative;
+}
+
+.risk-recommendations li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--color-primary);
+  font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 700px) {
+  .risk-score-section {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .risk-breakdown {
+    width: 100%;
+  }
+
+  .breakdown-info {
+    min-width: 110px;
+  }
+
+  .flag-item {
+    flex-wrap: wrap;
+  }
+}

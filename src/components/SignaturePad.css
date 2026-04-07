@@ -1,0 +1,348 @@
+/* ============================================================
+   SIGNATURE PAD STYLES - Premium Fintech Design
+   ============================================================ */
+
+.signature-pad-container {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  margin: 1rem 0;
+  transition: all var(--transition-normal);
+}
+
+.signature-pad-container:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+}
+
+.signature-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.signature-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-radius: var(--radius-md);
+  font-size: 1.2rem;
+}
+
+.signature-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  margin: 0;
+}
+
+.signature-subtitle {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  margin: 0;
+}
+
+/* Mode Toggle */
+.signature-mode-toggle {
+  display: flex;
+  gap: 0.5rem;
+  padding: 4px;
+  background: var(--color-gray-100);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: var(--color-text-medium);
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.mode-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: var(--shadow-sm);
+}
+
+.mode-btn:not(.active):hover {
+  background: var(--color-surface-hover);
+}
+
+/* Canvas Area */
+.signature-canvas-area {
+  width: 100%;
+}
+
+.canvas-wrapper {
+  position: relative;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  cursor: crosshair;
+  background: #fafafa;
+  transition: border-color var(--transition-fast);
+}
+
+[data-theme="night"] .canvas-wrapper {
+  background: #1a1f2e;
+  border-color: var(--color-gray-300);
+}
+
+.canvas-wrapper:hover {
+  border-color: var(--color-primary);
+}
+
+.signature-canvas {
+  display: block;
+  width: 100%;
+  touch-action: none;
+}
+
+[data-theme="night"] .signature-canvas {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.canvas-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--color-text-light);
+  font-size: 0.9rem;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.canvas-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  justify-content: flex-end;
+}
+
+/* Existing Signature Display */
+.existing-signature {
+  text-align: center;
+  padding: 1rem;
+  border: 2px solid var(--color-success);
+  border-radius: var(--radius-md);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.existing-signature img {
+  max-width: 100%;
+  max-height: 120px;
+  border-radius: var(--radius-sm);
+}
+
+.signed-label {
+  margin: 0.5rem 0 0;
+  font-weight: 600;
+  color: var(--color-success);
+  font-size: 0.9rem;
+}
+
+/* Signature Buttons */
+.sig-btn {
+  padding: 0.55rem 1.15rem;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.sig-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sig-btn-clear {
+  background: var(--color-surface-hover);
+  color: var(--color-text-medium);
+}
+
+.sig-btn-clear:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+.sig-btn-confirm {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+}
+
+.sig-btn-confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+.sig-btn-send-otp {
+  width: 100%;
+  padding: 0.8rem;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  font-size: 0.95rem;
+  justify-content: center;
+}
+
+.sig-btn-send-otp:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.sig-btn-verify {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  padding: 0.65rem 1.5rem;
+}
+
+.sig-btn-verify:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+}
+
+/* OTP Area */
+.signature-otp-area {
+  padding: 0.5rem 0;
+}
+
+.otp-info {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
+
+.otp-input-area {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.otp-timer {
+  font-size: 0.85rem;
+  color: var(--color-text-medium);
+  text-align: center;
+}
+
+.otp-expired {
+  color: #ef4444;
+}
+
+.otp-expired button {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.otp-dev-hint {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  color: #92400e;
+  text-align: center;
+  margin: 0;
+}
+
+[data-theme="night"] .otp-dev-hint {
+  background: linear-gradient(135deg, #451a03, #78350f);
+  color: #fde68a;
+}
+
+.otp-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.otp-input {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5em;
+  text-align: center;
+  background: var(--color-surface);
+  color: var(--color-text-dark);
+  transition: border-color var(--transition-fast);
+}
+
+.otp-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+/* OTP Verified */
+.otp-verified {
+  text-align: center;
+  padding: 2rem 1rem;
+  background: rgba(16, 185, 129, 0.05);
+  border: 2px solid var(--color-success);
+  border-radius: var(--radius-md);
+}
+
+.verified-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.otp-verified h4 {
+  margin: 0 0 0.25rem;
+  color: #059669;
+  font-size: 1.1rem;
+}
+
+.otp-verified p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .signature-pad-container {
+    padding: 1rem;
+  }
+
+  .signature-mode-toggle {
+    flex-direction: column;
+  }
+
+  .otp-input-group {
+    flex-direction: column;
+  }
+
+  .canvas-actions {
+    flex-direction: column;
+  }
+
+  .sig-btn {
+    justify-content: center;
+  }
+}

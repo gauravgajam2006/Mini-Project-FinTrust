@@ -1,0 +1,822 @@
+/* ============================================================
+   LOAN AGREEMENT PAGE - Premium Fintech Design
+   ============================================================ */
+
+.loan-agreement-page {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  animation: fadeInUp 0.5s ease-out;
+}
+
+/* ---- HEADER ---- */
+.page-header-ag {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.header-left-ag h1 {
+  font-size: 1.6rem;
+  font-weight: 800;
+  margin: 0 0 0.25rem;
+  color: var(--color-text-dark);
+}
+
+.header-left-ag p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+}
+
+.header-actions-ag {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.toggle-view-btn {
+  padding: 0.55rem 1rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-medium);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.toggle-view-btn.active {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+}
+
+.toggle-view-btn:not(.active):hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.count-badge {
+  background: rgba(255, 255, 255, 0.25);
+  padding: 0.1rem 0.45rem;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+/* ---- STEPPER ---- */
+.stepper-ag {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  padding: 1rem 0.5rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow-x: auto;
+  gap: 0.25rem;
+}
+
+.stepper-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  position: relative;
+  padding: 0.4rem;
+  min-width: 0;
+}
+
+.stepper-circle {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  font-weight: 700;
+  background: var(--color-gray-100);
+  color: var(--color-text-light);
+  border: 2px solid var(--color-border);
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.stepper-item.active .stepper-circle {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 12px rgba(99, 102, 241, 0.4);
+}
+
+.stepper-item.completed .stepper-circle {
+  background: #10b981;
+  color: #fff;
+  border-color: #10b981;
+}
+
+.stepper-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.stepper-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stepper-desc {
+  font-size: 0.62rem;
+  color: var(--color-text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stepper-line {
+  position: absolute;
+  right: -8px;
+  top: 50%;
+  width: 12px;
+  height: 2px;
+  background: var(--color-border);
+}
+
+.stepper-item.completed .stepper-line {
+  background: #10b981;
+}
+
+/* ---- FORM CARD ---- */
+.agreement-form-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  min-height: 340px;
+  margin-bottom: 1rem;
+  transition: all var(--transition-normal);
+}
+
+/* Form Sections */
+.form-section-ag {
+  margin-bottom: 1.25rem;
+}
+
+.section-title-ag {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem;
+  color: var(--color-text-dark);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-desc-ag {
+  font-size: 0.82rem;
+  color: var(--color-text-light);
+  margin: -0.25rem 0 0.75rem;
+}
+
+.auto-tag {
+  font-size: 0.65rem;
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+.required-tag {
+  font-size: 0.65rem;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-weight: 700;
+}
+
+/* Form Grid */
+.form-grid-ag {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.form-group-ag {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.form-group-ag.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-group-ag label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-medium);
+}
+
+.form-group-ag input,
+.form-group-ag select,
+.form-group-ag textarea {
+  padding: 0.6rem 0.8rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.88rem;
+  background: var(--color-background);
+  color: var(--color-text-dark);
+  transition: all var(--transition-fast);
+  font-family: var(--font-body);
+}
+
+.form-group-ag input:focus,
+.form-group-ag select:focus,
+.form-group-ag textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-group-ag input.input-error,
+.form-group-ag select.input-error {
+  border-color: #ef4444;
+}
+
+.form-group-ag input[readOnly] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error-msg {
+  font-size: 0.72rem;
+  color: #ef4444;
+  font-weight: 600;
+}
+
+/* ---- NAVIGATION ---- */
+.form-nav-ag {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+}
+
+.step-indicator {
+  font-size: 0.8rem;
+  color: var(--color-text-light);
+  font-weight: 600;
+}
+
+.submit-final-btn {
+  background: linear-gradient(135deg, #10b981, #059669) !important;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4) !important;
+}
+
+.submit-final-btn:hover {
+  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5) !important;
+}
+
+/* ---- CONSENT BOX ---- */
+.consent-box {
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.consent-box h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.95rem;
+  color: var(--color-text-dark);
+}
+
+.consent-box p {
+  font-size: 0.82rem;
+  color: var(--color-text-medium);
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.consent-box p:last-child {
+  margin-bottom: 0;
+}
+
+.signature-confirmed {
+  text-align: center;
+  padding: 0.65rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid #10b981;
+  border-radius: var(--radius-sm);
+  color: #059669;
+  font-weight: 700;
+  font-size: 0.88rem;
+  margin-top: 0.75rem;
+}
+
+/* ---- REVIEW GRID ---- */
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.review-card {
+  background: var(--color-gray-50);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+}
+
+.review-card h4 {
+  margin: 0 0 0.6rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--color-text-dark);
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.review-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  font-size: 0.82rem;
+}
+
+.review-item span {
+  color: var(--color-text-light);
+}
+
+.review-item strong {
+  color: var(--color-text-dark);
+  text-align: right;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.review-risk-summary {
+  display: flex;
+  justify-content: center;
+  margin-top: 0.5rem;
+}
+
+/* ---- FRAUD LOADING ---- */
+.fraud-loading {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.fraud-loading h4 {
+  margin: 1rem 0 0.25rem;
+  color: var(--color-text-dark);
+  font-size: 1.05rem;
+}
+
+.fraud-loading p {
+  color: var(--color-text-light);
+  font-size: 0.85rem;
+}
+
+.fraud-spinner {
+  position: relative;
+  width: 70px;
+  height: 70px;
+  margin: 0 auto;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 3px solid transparent;
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: rotate360 1s linear infinite;
+}
+
+.spinner-ring.delay-1 {
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+  border-top-color: #10b981;
+  animation-duration: 1.5s;
+  animation-direction: reverse;
+}
+
+.spinner-ring.delay-2 {
+  width: 60%;
+  height: 60%;
+  top: 20%;
+  left: 20%;
+  border-top-color: #f59e0b;
+  animation-duration: 2s;
+}
+
+.fraud-checks-anim {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.fraud-check-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  color: var(--color-text-medium);
+}
+
+.check-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* ---- AGREEMENTS LIST ---- */
+.agreements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.empty-agreements {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+.empty-agreements h3 {
+  margin: 0 0 0.25rem;
+  color: var(--color-text-dark);
+}
+
+.empty-agreements p {
+  color: var(--color-text-light);
+  font-size: 0.85rem;
+  margin-bottom: 1rem;
+}
+
+/* Agreement Card */
+.agreement-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.agreement-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+.ag-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.ag-card-id {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--color-text-light);
+  font-family: monospace;
+  letter-spacing: 0.05em;
+}
+
+.agreement-status-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.ag-card-body {
+  margin-bottom: 0.75rem;
+}
+
+.ag-card-amount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--color-text-dark);
+  font-family: var(--font-heading);
+}
+
+.ag-card-details {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: var(--color-text-light);
+  margin-top: 0.2rem;
+}
+
+.ag-card-parties {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.party-chip {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.party-chip.role-borrower {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+}
+
+.party-chip.role-lender {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.party-chip.role-guarantor {
+  background: rgba(245, 158, 11, 0.1);
+  color: #d97706;
+}
+
+.ag-card-risk {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--color-text-medium);
+}
+
+.ag-card-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ag-btn {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--color-surface);
+  color: var(--color-text-medium);
+  transition: all var(--transition-fast);
+}
+
+.ag-btn:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.ag-btn-approve {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #fff;
+  border-color: #10b981;
+}
+
+.ag-btn-approve:hover {
+  box-shadow: 0 3px 10px rgba(16, 185, 129, 0.3);
+  color: #fff;
+}
+
+.ag-btn-reject {
+  background: rgba(239, 68, 68, 0.05);
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.ag-btn-reject:hover {
+  background: #ef4444;
+  color: #fff;
+}
+
+.ag-card-date {
+  position: absolute;
+  top: 1rem;
+  right: 5rem;
+  font-size: 0.68rem;
+  color: var(--color-text-light);
+}
+
+/* ---- DETAIL MODAL ---- */
+.agreement-detail-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  backdrop-filter: blur(4px);
+}
+
+.agreement-detail-modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 1.75rem;
+  max-width: 650px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.close-modal-btn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-medium);
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.close-modal-btn:hover {
+  background: #ef4444;
+  color: #fff;
+  border-color: #ef4444;
+}
+
+.agreement-detail-modal h2 {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0.6rem;
+  background: var(--color-gray-50);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+}
+
+.detail-row span {
+  color: var(--color-text-light);
+}
+
+.detail-party {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.85rem;
+}
+
+.party-role-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  background: var(--color-gray-100);
+  color: var(--color-text-light);
+  text-transform: uppercase;
+}
+
+.party-email {
+  font-size: 0.75rem;
+  color: var(--color-text-light);
+}
+
+.detail-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 768px) {
+  .page-header-ag {
+    flex-direction: column;
+  }
+
+  .header-actions-ag {
+    width: 100%;
+  }
+
+  .toggle-view-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .stepper-ag {
+    gap: 0;
+    padding: 0.75rem 0.25rem;
+  }
+
+  .stepper-info {
+    display: none;
+  }
+
+  .stepper-line {
+    display: none;
+  }
+
+  .form-grid-ag {
+    grid-template-columns: 1fr;
+  }
+
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ag-card-date {
+    position: static;
+    margin-top: 0.5rem;
+  }
+
+  .form-nav-ag {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .form-nav-ag .btn-primary,
+  .form-nav-ag .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .loan-agreement-page {
+    padding: 0.75rem;
+  }
+
+  .agreement-form-card {
+    padding: 1rem;
+  }
+
+  .ag-card-actions {
+    flex-direction: column;
+  }
+
+  .ag-btn {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+  }
+}

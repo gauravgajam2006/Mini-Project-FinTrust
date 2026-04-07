@@ -22,6 +22,7 @@ const Profile = lazy(() => import('./pages/Profile'));
 const SocialHub = lazy(() => import('./pages/SocialHub'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
 const Chatbot = lazy(() => import('./components/Chatbot'));
+const LoanAgreement = lazy(() => import('./pages/LoanAgreement'));
 
 // Simple 404 page
 const NotFoundPage = () => (
@@ -86,6 +87,7 @@ const AnimatedRoutes = () => {
           <Route path="/loan/:id/edit" element={<ProtectedRoute><Layout><PageTransition><UpdateLoan /></PageTransition></Layout></ProtectedRoute>} />
           <Route path="/social" element={<ProtectedRoute><Layout><PageTransition><SocialHub /></PageTransition></Layout></ProtectedRoute>} />
           <Route path="/leaderboard" element={<ProtectedRoute><Layout><PageTransition><Leaderboard /></PageTransition></Layout></ProtectedRoute>} />
+          <Route path="/loan-agreement" element={<ProtectedRoute><Layout><PageTransition><LoanAgreement /></PageTransition></Layout></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Layout><PageTransition><Profile /></PageTransition></Layout></ProtectedRoute>} />
 
           <Route path="*" element={<NotFoundPage />} />
