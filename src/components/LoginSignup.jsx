@@ -218,20 +218,38 @@ const LoginSignup = () => {
                     <div className="signin-card">
                         <div className="signin-header">
                             <h2 className="signin-title">
-                                {isLogin ? 'Sign In' : (
-                                    signupStep === 1 ? 'Create Account' :
-                                        signupStep === 2 ? 'Verify Phone' : 'Link Aadhaar'
-                                )}
+                                {isLogin ? (authMode === 'password' ? 'Sign In' : 'OTP Login') : (
+                                     signupStep === 1 ? 'Create Account' :
+                                         signupStep === 2 ? 'Verify Phone' : 'Link Aadhaar'
+                                 )}
                             </h2>
                             <p className="signin-subtitle">
                                 {isLogin
-                                    ? 'Welcome back! Please sign in to continue.'
+                                    ? (authMode === 'password' ? 'Welcome back! Please sign in to continue.' : 'Enter your details to receive a 6-digit code.')
                                     : (
-                                        signupStep === 1 ? 'Join FinTrust to track informal loans.' :
-                                            signupStep === 2 ? `We've sent an SMS to ${phone}` : 'Identity verification is mandatory for a trusted network.'
-                                    )}
+                                         signupStep === 1 ? 'Join FinTrust to track informal loans.' :
+                                             signupStep === 2 ? `We've sent an SMS to ${phone}` : 'Identity verification is mandatory for a trusted network.'
+                                     )}
                             </p>
                         </div>
+
+                        {/* Mode Toggle for Login */}
+                        {isLogin && (
+                            <div className="auth-mode-toggle">
+                                <button 
+                                    className={`mode-btn ${authMode === 'password' ? 'active' : ''}`}
+                                    onClick={() => { setAuthMode('password'); setError(null); }}
+                                >
+                                    Password
+                                </button>
+                                <button 
+                                    className={`mode-btn ${authMode === 'otp' ? 'active' : ''}`}
+                                    onClick={() => { setAuthMode('otp'); setOtpStep(1); setError(null); }}
+                                >
+                                    OTP
+                                </button>
+                            </div>
+                        )}
 
                         {/* Progress Indicators for Signup */}
                         {!isLogin && (
@@ -265,8 +283,8 @@ const LoginSignup = () => {
                                 </div>
                             )}
 
-                            {/* SIGNIN OR SIGNUP STEP 1 */}
-                            {(isLogin || (!isLogin && signupStep === 1)) && (
+                            {/* SIGNIN PASSWORD OR SIGNUP STEP 1 */}
+                            {( (isLogin && authMode === 'password') || (!isLogin && signupStep === 1)) && (
                                 <>
                                     {!isLogin && (
                                         <div className="form-group">
@@ -314,8 +332,6 @@ const LoginSignup = () => {
                                         </div>
                                     )}
 
-
-
                                     <div className="form-group">
                                         <label htmlFor="password" className="form-label">Password</label>
                                         <div className="password-wrapper">
@@ -362,7 +378,80 @@ const LoginSignup = () => {
                                 </>
                             )}
 
-                            {/* SIGNUP STEP 2: MOCK OTP */}
+                            {/* LOGIN WITH OTP */}
+                            {isLogin && authMode === 'otp' && (
+                                <>
+                                    {otpStep === 1 ? (
+                                        <>
+                                            <div className="otp-type-selector">
+                                                <label className="type-btn">
+                                                    <input 
+                                                        type="radio" 
+                                                        name="otpType" 
+                                                        checked={otpType === 'email'} 
+                                                        onChange={() => setOtpType('email')} 
+                                                    />
+                                                    Email
+                                                </label>
+                                                <label className="type-btn">
+                                                    <input 
+                                                        type="radio" 
+                                                        name="otpType" 
+                                                        checked={otpType === 'phone'} 
+                                                        onChange={() => setOtpType('phone')} 
+                                                    />
+                                                    SMS
+                                                </label>
+                                            </div>
+
+                                            {otpType === 'email' ? (
+                                                <div className="form-group">
+                                                    <label className="form-label">Email Address</label>
+                                                    <input
+                                                        type="email"
+                                                        className="form-input"
+                                                        placeholder="you@example.com"
+                                                        value={email}
+                                                        onChange={(e) => setEmail(e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className="form-group">
+                                                    <label className="form-label">Phone Number</label>
+                                                    <input
+                                                        type="tel"
+                                                        className="form-input"
+                                                        placeholder="+91 98765 43210"
+                                                        value={phone}
+                                                        onChange={(e) => setPhone(e.target.value)}
+                                                        required
+                                                    />
+                                                </div>
+                                            )}
+                                        </>
+                                    ) : (
+                                        <div className="form-group">
+                                            <label className="form-label">6-Digit OTP</label>
+                                            <input
+                                                type="text"
+                                                maxLength="6"
+                                                className="form-input otp-input"
+                                                placeholder="······"
+                                                value={otp}
+                                                onChange={(e) => setOtp(e.target.value)}
+                                                required
+                                            />
+                                            <p className="otp-hint">Enter the code sent to your {otpType}.</p>
+                                            <button type="button" className="resend-link" onClick={() => setOtpStep(1)}>
+                                                Change {otpType} or Resend
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )}
+
+                            {/* SIGNUP STEP 2: REAL OTP */}
                             {!isLogin && signupStep === 2 && (
                                 <div className="form-group">
                                     <label htmlFor="otp" className="form-label">6-Digit OTP</label>
@@ -370,20 +459,17 @@ const LoginSignup = () => {
                                         type="text"
                                         id="otp"
                                         maxLength="6"
-                                        className="form-input"
+                                        className="form-input otp-input"
                                         placeholder="······"
-                                        style={{ fontSize: '24px', letterSpacing: '8px', textAlign: 'center' }}
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value)}
                                         required
                                     />
-                                    <p style={{ marginTop: '8px', fontSize: '12px', color: '#6B7280' }}>
-                                        Check your SMS messages for the code. (Mock: 123456)
-                                    </p>
+                                    <p className="otp-hint">Check your SMS messages for the code.</p>
                                 </div>
                             )}
 
-                            {/* SIGNUP STEP 3: MOCK AADHAAR */}
+                            {/* SIGNUP STEP 3: AADHAAR */}
                             {!isLogin && signupStep === 3 && (
                                 <div className="form-group">
                                     <label htmlFor="aadhaar" className="form-label">Aadhaar Number</label>
@@ -399,25 +485,28 @@ const LoginSignup = () => {
                                         required
                                     />
                                     <p style={{ marginTop: '8px', fontSize: '12px', color: '#6B7280' }}>
-                                        FinTrust requires identity verification to build a trusted peer-to-peer network. (Mock: enter any 12 digits)
+                                        FinTrust requires identity verification to build a trusted peer-to-peer network.
                                     </p>
                                 </div>
                             )}
 
                             <button type="submit" className="signin-button" disabled={loading}>
                                 {loading ? 'Processing...' : (
-                                    isLogin ? 'Sign In' :
-                                        (signupStep === 1 ? 'Send OTP' : signupStep === 2 ? 'Verify & Continue' : 'Create Account')
+                                    isLogin ? (authMode === 'password' ? 'Sign In' : (otpStep === 1 ? 'Send OTP' : 'Verify OTP')) :
+                                        (signupStep === 1 ? 'Next' : signupStep === 2 ? 'Verify & Continue' : 'Create Account')
                                 )}
                                 <span>→</span>
                             </button>
 
                             {/* Back button for multi-step */}
-                            {!isLogin && signupStep > 1 && (
+                            {((!isLogin && signupStep > 1) || (isLogin && authMode === 'otp' && otpStep > 1)) && (
                                 <button
                                     type="button"
                                     className="btn-back"
-                                    onClick={() => setSignupStep(signupStep - 1)}
+                                    onClick={() => {
+                                        if (!isLogin) setSignupStep(signupStep - 1);
+                                        else setOtpStep(1);
+                                    }}
                                 >
                                     Back
                                 </button>
@@ -430,6 +519,8 @@ const LoginSignup = () => {
                                 e.preventDefault();
                                 setIsLogin(!isLogin);
                                 setSignupStep(1);
+                                setAuthMode('password');
+                                setOtpStep(1);
                                 setError(null);
                             }}>
                                 {isLogin ? 'Sign Up' : 'Sign In'}

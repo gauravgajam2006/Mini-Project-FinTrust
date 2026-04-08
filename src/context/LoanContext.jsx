@@ -675,7 +675,7 @@ export const LoanProvider = ({ children }) => {
         const { data, error } = await supabase.auth.verifyOtp({
             [type]: emailOrPhone,
             token,
-            type: type === 'email' ? 'magiclink' : 'sms', // 'magiclink' is also used for email OTP tokens
+            type: type === 'email' ? 'email' : 'sms', 
         });
         if (error) throw error;
         return { user: data.user, error: null };
