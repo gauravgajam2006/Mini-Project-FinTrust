@@ -4,11 +4,14 @@ import { useLoan } from '../context/LoanContext';
 import './LoginSignup.css';
 
 const LoginSignup = () => {
-    const { login, signup, loginWithGoogle } = useLoan();
+    const { login, signup, loginWithGoogle, sendOtp, verifyOtp } = useLoan();
     const [isLogin, setIsLogin] = useState(true);
+    const [authMode, setAuthMode] = useState('password'); // 'password' or 'otp'
+    const [otpStep, setOtpStep] = useState(1); // 1: Input email/phone, 2: Input OTP
     const [signupStep, setSignupStep] = useState(1); // 1: Details, 2: OTP, 3: Aadhaar
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [otpType, setOtpType] = useState('email'); // 'email' or 'phone'
 
     // Form fields
     const [name, setName] = useState('');
@@ -30,23 +33,55 @@ const LoginSignup = () => {
         setError(null);
 
         if (isLogin) {
-            setLoading(true);
-            try {
-                await login(email, password);
-            } catch (err) {
-                console.error('Auth error:', err);
-                let errorMessage = err.message || 'An error occurred';
-                if (errorMessage.includes('Invalid login credentials') || errorMessage.includes('auth/invalid-credential')) {
-                    errorMessage = 'Invalid email or password. Please try again, or create an account if you don\'t have one.';
-                } else if (errorMessage.includes('auth/email-already-in-use') || errorMessage.includes('User already registered')) {
-                    errorMessage = 'This email is already registered. Please sign in instead.';
-                    setIsLogin(true);
-                } else if (errorMessage.includes('auth/weak-password')) {
-                    errorMessage = 'Password should be at least 6 characters.';
+            if (authMode === 'password') {
+                setLoading(true);
+                try {
+                    await login(email, password);
+                } catch (err) {
+                    console.error('Auth error:', err);
+                    let errorMessage = err.message || 'An error occurred';
+                    if (errorMessage.includes('Invalid login credentials') || errorMessage.includes('auth/invalid-credential')) {
+                        errorMessage = 'Invalid email or password. Please try again, or create an account if you don\'t have one.';
+                    } else if (errorMessage.includes('auth/email-already-in-use') || errorMessage.includes('User already registered')) {
+                        errorMessage = 'This email is already registered. Please sign in instead.';
+                        setIsLogin(true);
+                    } else if (errorMessage.includes('auth/weak-password')) {
+                        errorMessage = 'Password should be at least 6 characters.';
+                    }
+                    setError(errorMessage);
+                } finally {
+                    setLoading(false);
                 }
-                setError(errorMessage);
-            } finally {
-                setLoading(false);
+            } else {
+                // OTP Login Logic
+                if (otpStep === 1) {
+                    const identifier = otpType === 'email' ? email : phone;
+                    if (!identifier) {
+                        setError(`Please enter your ${otpType} to receive an OTP.`);
+                        return;
+                    }
+                    setLoading(true);
+                    try {
+                        await sendOtp(identifier, otpType);
+                        setOtpStep(2);
+                        toast.success(`OTP sent to your ${otpType}!`);
+                    } catch (err) {
+                        setError(err.message);
+                    } finally {
+                        setLoading(false);
+                    }
+                } else {
+                    const identifier = otpType === 'email' ? email : phone;
+                    setLoading(true);
+                    try {
+                        await verifyOtp(identifier, otp, otpType);
+                        toast.success('Login successful!');
+                    } catch (err) {
+                        setError(err.message);
+                    } finally {
+                        setLoading(false);
+                    }
+                }
             }
         } else {
             // Sign Up Multi-Step Logic
@@ -59,17 +94,38 @@ const LoginSignup = () => {
                     setError('Password should be at least 6 characters.');
                     return;
                 }
-                // Move to OTP Step
-                setSignupStep(2);
-                setError('OTP sent! For this demo, please enter any 6-digit number (e.g., 123456).');
+                
+                // Real OTP for Signup
+                setLoading(true);
+                try {
+                    // Send OTP to phone or email based on user preference or default
+                    // For signup, let's use the provided phone for verification
+                    await sendOtp(phone, 'phone');
+                    setSignupStep(2);
+                    toast.success('Verification code sent to your phone!');
+                } catch (err) {
+                    setError(err.message);
+                } finally {
+                    setLoading(false);
+                }
             } else if (signupStep === 2) {
                 if (otp.length !== 6 || !/^\d+$/.test(otp)) {
                     setError('Please enter a valid 6-digit OTP.');
                     return;
                 }
-                // Move to Aadhaar Step
-                setSignupStep(3);
-                setError(null);
+                
+                setLoading(true);
+                try {
+                    // Verify OTP first, then create account
+                    await verifyOtp(phone, otp, 'phone');
+                    setSignupStep(3);
+                    setError(null);
+                    toast.success('Phone verified!');
+                } catch (err) {
+                    setError('Invalid OTP. Please try again.');
+                } finally {
+                    setLoading(false);
+                }
             } else if (signupStep === 3) {
                 if (aadhaar.length !== 12 || !/^\d+$/.test(aadhaar)) {
                     setError('Please enter a valid 12-digit Aadhaar number.');
@@ -79,6 +135,7 @@ const LoginSignup = () => {
                 setLoading(true);
                 try {
                     await signup(email, password, name, phone, aadhaar);
+                    toast.success('Account created successfully!');
                 } catch (err) {
                     console.error('Auth error:', err);
                     let errorMessage = err.message || 'An error occurred';
