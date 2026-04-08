@@ -944,7 +944,7 @@ export const LoanProvider = ({ children }) => {
             getTotalAmountOwed, getPendingLoans, getOverdueLoans,
             getActivityFeed, getLoanActivityLog,
             markNotificationRead, markAllNotificationsRead, deleteNotification,
-            respondToLoan, getPendingApprovalLoans
+            respondToLoan, getPendingApprovalLoans, sendOtp, verifyOtp
         }}>
             {children}
         </LoanContext.Provider>
