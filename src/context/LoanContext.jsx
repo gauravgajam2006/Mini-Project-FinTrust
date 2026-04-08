@@ -657,6 +657,30 @@ export const LoanProvider = ({ children }) => {
         return { user: data.user, error: null };
     };
 
+    // SEND OTP (Email or SMS)
+    const sendOtp = async (emailOrPhone, type = 'email') => {
+        const { data, error } = await supabase.auth.signInWithOtp({
+            [type]: emailOrPhone,
+            options: {
+                // If this is set to false, it will only work for existing users
+                shouldCreateUser: true,
+            }
+        });
+        if (error) throw error;
+        return { data, error: null };
+    };
+
+    // VERIFY OTP
+    const verifyOtp = async (emailOrPhone, token, type = 'email') => {
+        const { data, error } = await supabase.auth.verifyOtp({
+            [type]: emailOrPhone,
+            token,
+            type: type === 'email' ? 'magiclink' : 'sms', // 'magiclink' is also used for email OTP tokens
+        });
+        if (error) throw error;
+        return { user: data.user, error: null };
+    };
+
     // LOGOUT
     const logout = async () => {
         const { error } = await supabase.auth.signOut();
