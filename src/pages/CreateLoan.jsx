@@ -290,10 +290,8 @@ const CreateLoan = () => {
                                     value={
                                         formData.borrowerName 
                                             ? { 
-                                                label: isEmailReadOnly 
-                                                    ? `${formData.borrowerName} (${formData.borrowerEmail})` 
-                                                    : formData.borrowerName, 
-                                                value: formData.borrowerName 
+                                                label: formData.borrowerName, 
+                                                value: isEmailReadOnly ? formData.borrowerEmail : formData.borrowerName 
                                               } 
                                             : null
                                     }
