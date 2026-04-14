@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import CreatableSelect from 'react-select/creatable';
 import { useNavigate } from 'react-router-dom';
 import { useLoan } from '../context/LoanContext';
 import { validateLoanData } from '../utils/loanValidation';
@@ -28,6 +29,67 @@ const CreateLoan = () => {
     const [isForeignCurrency, setIsForeignCurrency] = useState(false);
     const [currency, setCurrency] = useState('USD');
     const [foreignAmount, setForeignAmount] = useState('');
+    const [profiles, setProfiles] = useState([]);
+    const [isEmailReadOnly, setIsEmailReadOnly] = useState(false);
+
+    useEffect(() => {
+        const fetchProfiles = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('name, email');
+                if (error) throw error;
+                
+                // Format for react-select
+                const formattedProfiles = data.map(profile => ({
+                    value: profile.email,
+                    label: `${profile.name} (${profile.email})`,
+                    name: profile.name,
+                    email: profile.email
+                }));
+                // Filter out current user from the list
+                setProfiles(formattedProfiles.filter(p => p.email !== user?.email));
+            } catch (error) {
+                console.error('Error fetching profiles:', error);
+            }
+        };
+
+        if (user) {
+            fetchProfiles();
+        }
+    }, [user]);
+
+    const handleNameSelect = (selectedOption) => {
+        if (selectedOption) {
+            if (selectedOption.email) {
+                // Existing user selected
+                setFormData(prev => ({
+                    ...prev,
+                    borrowerName: selectedOption.name,
+                    borrowerEmail: selectedOption.email
+                }));
+                setIsEmailReadOnly(true);
+                setErrors(prev => ({ ...prev, borrowerName: '', borrowerEmail: '' }));
+            } else {
+                // New custom name created
+                setFormData(prev => ({
+                    ...prev,
+                    borrowerName: selectedOption.value,
+                    borrowerEmail: ''
+                }));
+                setIsEmailReadOnly(false);
+                setErrors(prev => ({ ...prev, borrowerName: '' }));
+            }
+        } else {
+            // Cleared
+            setFormData(prev => ({
+                ...prev,
+                borrowerName: '',
+                borrowerEmail: ''
+            }));
+            setIsEmailReadOnly(false);
+        }
+    };
 
     const EXCHANGE_RATES = {
         'USD': { rate: 84.5, symbol: '$' },
@@ -218,13 +280,64 @@ const CreateLoan = () => {
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Name *</label>
-                                <input
-                                    type="text"
-                                    name="borrowerName"
-                                    value={formData.borrowerName}
-                                    onChange={handleChange}
-                                    placeholder="Enter name"
-                                    className={errors.borrowerName ? 'error' : ''}
+                                <CreatableSelect
+                                    isClearable
+                                    options={profiles}
+                                    onChange={handleNameSelect}
+                                    placeholder="Select or type name..."
+                                    className={`react-select-container ${errors.borrowerName ? 'error' : ''}`}
+                                    classNamePrefix="react-select"
+                                    value={
+                                        formData.borrowerName 
+                                            ? { 
+                                                label: isEmailReadOnly 
+                                                    ? `${formData.borrowerName} (${formData.borrowerEmail})` 
+                                                    : formData.borrowerName, 
+                                                value: formData.borrowerName 
+                                              } 
+                                            : null
+                                    }
+                                    styles={{
+                                        control: (baseStyles, state) => ({
+                                            ...baseStyles,
+                                            backgroundColor: 'var(--color-background)',
+                                            borderColor: errors.borrowerName ? '#EF4444' : state.isFocused ? 'var(--color-primary)' : 'var(--color-border)',
+                                            boxShadow: state.isFocused ? '0 0 0 3px rgba(0, 217, 255, 0.1), 0 0 20px rgba(0, 217, 255, 0.2)' : 'none',
+                                            '&:hover': {
+                                                borderColor: state.isFocused ? 'var(--color-primary)' : 'var(--color-text-medium)'
+                                            },
+                                            padding: '2px',
+                                            borderRadius: 'var(--radius-md)',
+                                            fontFamily: 'var(--font-body)'
+                                        }),
+                                        menu: (baseStyles) => ({
+                                            ...baseStyles,
+                                            backgroundColor: 'var(--color-surface)',
+                                            zIndex: 100,
+                                            border: '1px solid var(--color-border)'
+                                        }),
+                                        option: (baseStyles, state) => ({
+                                            ...baseStyles,
+                                            backgroundColor: state.isFocused ? 'rgba(124, 58, 237, 0.1)' : 'transparent',
+                                            color: 'var(--color-text-dark)',
+                                            cursor: 'pointer',
+                                            fontFamily: 'var(--font-body)',
+                                            '&:active': {
+                                                backgroundColor: 'var(--color-primary)',
+                                                color: 'white'
+                                            }
+                                        }),
+                                        singleValue: (baseStyles) => ({
+                                            ...baseStyles,
+                                            color: 'var(--color-text-dark)',
+                                            fontFamily: 'var(--font-body)'
+                                        }),
+                                        input: (baseStyles) => ({
+                                            ...baseStyles,
+                                            color: 'var(--color-text-dark)',
+                                            fontFamily: 'var(--font-body)'
+                                        })
+                                    }}
                                 />
                                 {errors.borrowerName && <span className="error-text">{errors.borrowerName}</span>}
                             </div>
@@ -237,8 +350,9 @@ const CreateLoan = () => {
                                     value={formData.borrowerEmail}
                                     onChange={handleChange}
                                     onBlur={handleEmailBlur}
+                                    readOnly={isEmailReadOnly}
                                     placeholder="email@example.com"
-                                    className={errors.borrowerEmail ? 'error' : ''}
+                                    className={`${errors.borrowerEmail ? 'error' : ''} ${isEmailReadOnly ? 'read-only-input' : ''}`}
                                 />
                                 {errors.borrowerEmail && <span className="error-text">{errors.borrowerEmail}</span>}
                             </div>

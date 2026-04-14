@@ -144,6 +144,22 @@
     border-color: #EF4444;
 }
 
+.form-group input.read-only-input {
+    background-color: var(--color-gray-100);
+    color: var(--color-text-medium);
+    cursor: not-allowed;
+    border-color: var(--color-border);
+}
+.form-group input.read-only-input:focus {
+    box-shadow: none;
+    transform: none;
+}
+
+html[data-theme='dark'] .form-group input.read-only-input {
+    background-color: var(--color-gray-900);
+    color: var(--color-text-muted);
+}
+
 .error-text {
     color: #EF4444;
     font-size: 0.85rem;
