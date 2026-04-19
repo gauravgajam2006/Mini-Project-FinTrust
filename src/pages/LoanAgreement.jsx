@@ -45,6 +45,8 @@ const LoanAgreement = () => {
   const [showAgreementsList, setShowAgreementsList] = useState(false);
   const [selectedAgreement, setSelectedAgreement] = useState(null);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [lenderSigningId, setLenderSigningId] = useState(null);
+  const [lenderSignature, setLenderSignature] = useState(null);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -292,12 +294,31 @@ const LoanAgreement = () => {
   // ============================================================
   // LENDER ACTIONS
   // ============================================================
-  const handleLenderApprove = async (agId) => {
+  const handleLenderSignatureCapture = (sigData) => {
+    setLenderSignature(sigData);
+  };
+
+  const handleLenderOTPVerify = (otpData) => {
+    setLenderSignature(otpData);
+  };
+
+  const handleLenderConfirmApprove = async () => {
+    if (!lenderSignature) {
+      toast.error('Please provide your signature to approve');
+      return;
+    }
+    
     try {
       setIsGeneratingPDF(true);
-      toast.loading('Generating agreement PDF...', { id: 'pdf-gen' });
+      toast.loading('Saving signature & generating PDF...', { id: 'pdf-gen' });
       
-      const result = await completeAgreement(agId);
+      // Save signature
+      const sigResult = await saveSignature(lenderSigningId, lenderSignature);
+      if (!sigResult.success) {
+        throw new Error('Failed to save signature: ' + sigResult.error);
+      }
+
+      const result = await completeAgreement(lenderSigningId);
       
       if (result.success) {
         toast.dismiss('pdf-gen');
@@ -305,10 +326,12 @@ const LoanAgreement = () => {
         
         // Download PDF
         if (result.pdfDoc) {
-          result.pdfDoc.save(`FinTrust_Agreement_${agId.slice(0, 8).toUpperCase()}.pdf`);
+          result.pdfDoc.save(`FinTrust_Agreement_${lenderSigningId.slice(0, 8).toUpperCase()}.pdf`);
         }
         
         await loadAgreements();
+        setLenderSigningId(null);
+        setLenderSignature(null);
       } else {
         toast.dismiss('pdf-gen');
         toast.error('Approval failed: ' + result.error);
@@ -319,6 +342,11 @@ const LoanAgreement = () => {
     } finally {
       setIsGeneratingPDF(false);
     }
+  };
+
+  const initLenderApprove = (agId) => {
+    setLenderSigningId(agId);
+    setLenderSignature(null);
   };
 
   const handleLenderReject = async (agId) => {
@@ -727,8 +755,45 @@ const LoanAgreement = () => {
                     </>
                   )}
                   <div className="detail-actions">
-                    <button className="btn-primary" onClick={() => handleDownloadPDF(selectedAgreement.id)}>
+                    <button 
+                      className="btn-primary" 
+                      onClick={() => handleDownloadPDF(selectedAgreement.id)}
+                      disabled={!['active', 'completed'].includes(selectedAgreement.status)}
+                      title={!['active', 'completed'].includes(selectedAgreement.status) ? "Available only after lender approval" : ""}
+                    >
                       📥 Download PDF
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+
+            {/* LENDER SIGNATURE MODAL */}
+            {lenderSigningId && (
+              <div className="agreement-detail-overlay" onClick={() => setLenderSigningId(null)}>
+                <motion.div className="agreement-detail-modal" onClick={e => e.stopPropagation()}
+                  initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+                  <button className="close-modal-btn" onClick={() => setLenderSigningId(null)}>✕</button>
+                  <h2>Lender Signature</h2>
+                  <p style={{ color: 'var(--text-secondary)' }}>Please sign below to approve agreement #{lenderSigningId.slice(0, 8).toUpperCase()}</p>
+                  
+                  <div style={{ marginTop: '1.5rem', marginBottom: '1.5rem', background: 'var(--card-bg)', borderRadius: '12px', padding: '1rem', border: '1px solid var(--border-color)' }}>
+                    <SignaturePad
+                      signerName={user?.name || 'Lender'}
+                      onSignatureCapture={handleLenderSignatureCapture}
+                      onOTPVerify={handleLenderOTPVerify}
+                      existingSignature={lenderSignature?.type === 'canvas' ? lenderSignature.image : null}
+                    />
+                  </div>
+
+                  <div className="detail-actions">
+                    <button 
+                      className="btn-primary" 
+                      onClick={handleLenderConfirmApprove}
+                      disabled={isGeneratingPDF || !lenderSignature}
+                      style={{ width: '100%' }}
+                    >
+                      {isGeneratingPDF ? '⏳ Approving...' : '✅ Confirm Approval & Generate PDF'}
                     </button>
                   </div>
                 </motion.div>
@@ -786,12 +851,19 @@ const LoanAgreement = () => {
                     </div>
                     <div className="ag-card-actions">
                       <button className="ag-btn ag-btn-view" onClick={() => handleViewDetails(ag.id)}>👁️ Details</button>
-                      <button className="ag-btn ag-btn-pdf" onClick={() => handleDownloadPDF(ag.id)}>📥 PDF</button>
+                      <button 
+                        className="ag-btn ag-btn-pdf" 
+                        onClick={() => handleDownloadPDF(ag.id)}
+                        disabled={!['active', 'completed'].includes(ag.status)}
+                        title={!['active', 'completed'].includes(ag.status) ? "Available after lender approval" : ""}
+                      >
+                        📥 PDF
+                      </button>
                       
                       {/* Lender approve/reject buttons */}
                       {ag.status === 'pending_lender_review' && isLenderForAgreement(ag) && (
                         <>
-                          <button className="ag-btn ag-btn-approve" onClick={() => handleLenderApprove(ag.id)} disabled={isGeneratingPDF}>
+                          <button className="ag-btn ag-btn-approve" onClick={() => initLenderApprove(ag.id)} disabled={isGeneratingPDF}>
                             ✅ Approve & Sign
                           </button>
                           <button className="ag-btn ag-btn-reject" onClick={() => handleLenderReject(ag.id)}>
