@@ -15,12 +15,13 @@
 }
 
 .professional-gateway {
-    background: var(--color-surface, #ffffff);
+    background: var(--color-background, #ffffff);
     color: var(--color-text-dark, #333333);
-    border-radius: 16px;
+    border-radius: 12px;
     width: 95%;
-    max-width: 800px;
-    min-height: 520px;
+    max-width: 760px;
+    height: auto;
+    max-height: 90vh; /* Ensure it fits in viewport */
     display: flex;
     box-shadow: var(--shadow-xl);
     border: 1px solid var(--color-border);
@@ -37,8 +38,8 @@
 
 /* Sidebar */
 .gateway-sidebar {
-    width: 260px;
-    background: var(--color-gray-50, #f8f9fa);
+    width: 240px;
+    background: var(--color-surface, #f8f9fa);
     border-right: 1px solid var(--color-border, #eaeaea);
     display: flex;
     flex-direction: column;
@@ -50,10 +51,10 @@
 }
 
 .gateway-logo {
-    padding: 24px;
+    padding: 20px 24px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .gateway-logo h3 {
@@ -85,7 +86,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 16px 24px;
+    padding: 14px 24px;
     background: transparent;
     border: none;
     border-left: 3px solid transparent;
@@ -126,7 +127,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: var(--color-background, #ffffff); /* Main area is darker/deeper bg */
+    background: var(--color-background, #ffffff); 
 }
 
 [data-theme="night"] .gateway-content {
@@ -137,7 +138,7 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    padding: 24px;
+    padding: 20px 24px;
     border-bottom: 1px solid var(--color-border, #eaeaea);
 }
 
@@ -151,7 +152,7 @@
 }
 
 .gateway-amount {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
     line-height: 1.1;
 }
@@ -186,10 +187,11 @@
 /* Body and Forms */
 .gateway-body {
     flex: 1;
-    padding: 24px;
+    padding: 20px 24px;
     position: relative;
     display: flex;
     flex-direction: column;
+    overflow-y: auto; /* Allow internal scroll if content overflows, but base height is smaller */
 }
 
 .form-group {
@@ -235,14 +237,14 @@
 .card-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
-    margin-top: 16px;
+    gap: 12px;
+    margin-top: 12px;
 }
 
 .upi-apps-row {
     display: flex;
-    gap: 12px;
-    margin-top: 16px;
+    gap: 10px;
+    margin-top: 12px;
 }
 
 .quick-app {
@@ -269,16 +271,16 @@
 
 .gateway-pay-btn {
     width: 100%;
-    padding: 14px;
+    padding: 12px;
     background: var(--color-primary, #0ea5e9);
     color: #fff;
     border: none;
     border-radius: 6px;
-    font-size: 1.05rem;
+    font-size: 1rem;
     font-weight: 700;
-    margin-top: 12px;
+    margin-top: 4px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(14, 165, 233, 0.25);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
     transition: transform 0.1s, background 0.2s;
 }
 
@@ -398,8 +400,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 16px 24px;
-    background: var(--color-gray-50, #fafafa);
+    padding: 12px 24px;
+    background: var(--color-surface, #fafafa);
     border-top: 1px solid var(--color-border, #eaeaea);
     font-size: 0.75rem;
 }
