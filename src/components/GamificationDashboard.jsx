@@ -45,8 +45,8 @@ const GamificationDashboard = () => {
                     </div>
                     <div className="level-progress">
                         <div className="progress-info">
-                            <span>{gamification.points} points</span>
-                            {nextLevel && <span>{nextLevel.minPoints} pts to next level</span>}
+                            <span>{gamification.points.toLocaleString()} points</span>
+                            {nextLevel && <span>{(nextLevel.minPoints - gamification.points).toLocaleString()} pts to next level</span>}
                         </div>
                         <div className="progress-bar-large">
                             <div

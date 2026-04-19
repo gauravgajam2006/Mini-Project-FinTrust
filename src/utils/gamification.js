@@ -80,3 +80,32 @@ export const pointsConfig = {
     STREAK_7_DAYS: 100,
     STREAK_30_DAYS: 500
 };
+
+/**
+ * Calculates current level and new badges based on points and stats
+ * @param {Object} currentGam Gamification state
+ * @returns {Object} Updated gamification state
+ */
+export const calculateGamificationUpdate = (currentGam) => {
+    // Calculate Level
+    let newLevel = 1;
+    for (let i = levels.length - 1; i >= 0; i--) {
+        if (currentGam.points >= levels[i].minPoints) {
+            newLevel = levels[i].level;
+            break;
+        }
+    }
+
+    // Identify new badges
+    const currentBadges = currentGam.badges || [];
+    const unlockedBadges = badges
+        .filter(badge => !currentBadges.includes(badge.id))
+        .filter(badge => badge.condition(currentGam))
+        .map(badge => badge.id);
+
+    return {
+        ...currentGam,
+        level: newLevel,
+        badges: [...currentBadges, ...unlockedBadges]
+    };
+};

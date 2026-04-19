@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
+import { calculateGamificationUpdate } from '../utils/gamification';
 
 const LoanContext = createContext();
 
@@ -77,7 +78,9 @@ export const LoanProvider = ({ children }) => {
             });
 
             if (profile?.gamification) {
-                setGamification(profile.gamification);
+                // Ensure level and badges are up to date with points
+                const updatedGam = calculateGamificationUpdate(profile.gamification);
+                setGamification(updatedGam);
             }
             
             setIsAuthenticated(true);
@@ -890,11 +893,18 @@ export const LoanProvider = ({ children }) => {
     }, [gamification, user, isAuthenticated]);
 
     const updateStatsOnLoanCreate = () => {
-        setGamification(prev => ({
-            ...prev,
-            stats: { ...prev.stats, totalLoans: prev.stats.totalLoans + 1 },
-            points: prev.points + 50
-        }));
+        setGamification(prev => {
+            const next = {
+                ...prev,
+                stats: { ...prev.stats, totalLoans: prev.stats.totalLoans + 1 },
+                points: prev.points + 50
+            };
+            const updated = calculateGamificationUpdate(next);
+            if (updated.level > prev.level) {
+                toast.success(`🎉 Level Up! You reached Level ${updated.level}: ${updated.title || 'Advanced'}`);
+            }
+            return updated;
+        });
     };
 
     const updateStatsOnPayment = async (paymentDate, dueDate) => {
@@ -903,7 +913,7 @@ export const LoanProvider = ({ children }) => {
         const { data: userProfile } = await supabase.from('profiles').select('gamification').eq('id', user.id).single();
         if (userProfile?.gamification) {
             const isOnTime = new Date(paymentDate) <= new Date(dueDate);
-            setGamification({
+            const next = {
                 ...userProfile.gamification,
                 stats: {
                     ...userProfile.gamification.stats,
@@ -911,17 +921,32 @@ export const LoanProvider = ({ children }) => {
                     onTimePayments: isOnTime ? (userProfile.gamification.stats.onTimePayments || 0) + 1 : (userProfile.gamification.stats.onTimePayments || 0)
                 },
                 points: (userProfile.gamification.points || 0) + (isOnTime ? 75 : 50)
-                // trustScore correctly stays at the DB trigger value
-            });
+            };
+            
+            const updated = calculateGamificationUpdate(next);
+            const currentLevel = gamification.level;
+            
+            if (updated.level > currentLevel) {
+                toast.success(`🎉 Level Up! You reached Level ${updated.level}`);
+            }
+            
+            setGamification(updated);
         }
     };
 
     const updateStatsOnLoanComplete = () => {
-        setGamification(prev => ({
-            ...prev,
-            stats: { ...prev.stats, completedLoans: prev.stats.completedLoans + 1 },
-            points: prev.points + 200
-        }));
+        setGamification(prev => {
+            const next = {
+                ...prev,
+                stats: { ...prev.stats, completedLoans: prev.stats.completedLoans + 1 },
+                points: prev.points + 200
+            };
+            const updated = calculateGamificationUpdate(next);
+            if (updated.level > prev.level) {
+                toast.success(`🎉 Level Up! You reached Level ${updated.level}`);
+            }
+            return updated;
+        });
     };
 
     const getDashboardStats = () => {
