@@ -72,7 +72,7 @@ const GamificationDashboard = () => {
                         </div>
                     </div>
                     <div className="trust-score-display">
-                        <div className="score-value">{gamification.trustScore}</div>
+                        <div className="score-value">{Number(gamification.trustScore || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
                         <div className="score-meter">
                             <div
                                 className="score-fill"
