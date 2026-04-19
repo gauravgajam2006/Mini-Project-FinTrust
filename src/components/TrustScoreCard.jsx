@@ -28,8 +28,11 @@ ChartJS.register(
 const TrustScoreCard = ({ score = 0, historyData = [] }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
 
-  // Trust score is on a 0-100 scale (from profiles.trust_score in DB).
-  // Safety guard: if somehow a legacy 0-1000 value leaks through, normalize it.
+  // Normalize trust score from 0-1000 down to 0-100 if needed, or 0-100 to 0-100
+  // Given user's example in request, they want it 0-100: "Red (0-40), Yellow (41-70), Green (71-100)"
+  // But FinTrust seems to use a 0-1000 scale in LoanContext (trustScore: 500 default).
+  // Wait, the user explicitly asked for 0-100 score in the concept: "Red (0–40), Yellow (41–70), Green (71–100)"
+  // Let me map 0-1000 to 0-100.
   const displayScore = typeof score === 'number' && score > 100 ? Math.round(score / 10) : score;
 
   useEffect(() => {
