@@ -21,7 +21,6 @@ const UpdateLoan = lazy(() => import('./pages/UpdateLoan'));
 const Profile = lazy(() => import('./pages/Profile'));
 const SocialHub = lazy(() => import('./pages/SocialHub'));
 const Leaderboard = lazy(() => import('./pages/Leaderboard'));
-const Chatbot = lazy(() => import('./components/Chatbot'));
 const LoanAgreement = lazy(() => import('./pages/LoanAgreement'));
 
 // Simple 404 page
@@ -106,7 +105,6 @@ function App() {
         <Router>
           <LoanProvider>
             <Toaster position="top-right" />
-            <Chatbot />
             <AnimatedRoutes />
           </LoanProvider>
         </Router>
