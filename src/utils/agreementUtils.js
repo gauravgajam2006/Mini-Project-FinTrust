@@ -972,6 +972,18 @@ export async function completeAgreement(agreementId) {
 
     const agreementData = detailsResult.data;
 
+    // Helper: fetch remote image as base64 data URL
+    const fetchImageAsBase64 = async (url) => {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    };
+
     // Fetch signature images for PDF
     let borrowerSig = null;
     let lenderSig = null;
@@ -980,8 +992,16 @@ export async function completeAgreement(agreementId) {
         const party = agreementData.parties.find(p => p.id === sig.party_id);
         const urlResult = await getDocumentSignedURL(sig.signature_image_url, 'agreement-signatures');
         if (urlResult.success && party) {
-          if (party.role === 'borrower') borrowerSig = urlResult.url;
-          if (party.role === 'lender') lenderSig = urlResult.url;
+          try {
+            const base64 = await fetchImageAsBase64(urlResult.url);
+            if (party.role === 'borrower') borrowerSig = base64;
+            if (party.role === 'lender') lenderSig = base64;
+          } catch (e) {
+            console.warn('Could not convert signature to base64 for', party.role, e);
+            // Fallback: use the URL directly (may not render in PDF)
+            if (party.role === 'borrower') borrowerSig = urlResult.url;
+            if (party.role === 'lender') lenderSig = urlResult.url;
+          }
         }
       }
     }

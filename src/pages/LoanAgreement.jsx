@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 // eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoan } from '../context/LoanContext';
+import { supabase } from '../supabase';
 import SignaturePad from '../components/SignaturePad';
 import {
   createAgreement,
@@ -361,7 +362,48 @@ const LoanAgreement = () => {
       const detailsResult = await fetchAgreementDetails(agId);
       if (!detailsResult.success) throw new Error('Failed to fetch agreement');
 
-      const pdfDoc = generateAgreementPDF(detailsResult.data);
+      const agreementData = detailsResult.data;
+
+      // Helper: fetch a remote image and convert to base64 data URL
+      const fetchImageAsBase64 = async (url) => {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      };
+
+      // Resolve signature image URLs from Supabase Storage → base64
+      let borrowerSig = null;
+      let lenderSig = null;
+      for (const sig of agreementData.signatures || []) {
+        if (sig.signature_image_url) {
+          const party = agreementData.parties.find(p => p.id === sig.party_id);
+          if (party) {
+            try {
+              const { data } = await supabase.storage
+                .from('agreement-signatures')
+                .createSignedUrl(sig.signature_image_url, 3600);
+              if (data?.signedUrl) {
+                const base64 = await fetchImageAsBase64(data.signedUrl);
+                if (party.role === 'borrower') borrowerSig = base64;
+                if (party.role === 'lender') lenderSig = base64;
+              }
+            } catch (e) {
+              console.warn('Could not fetch signature for', party.role, e);
+            }
+          }
+        }
+      }
+
+      const pdfDoc = generateAgreementPDF({
+        ...agreementData,
+        borrowerSignature: borrowerSig,
+        lenderSignature: lenderSig,
+      });
       pdfDoc.save(`FinTrust_Agreement_${agId.slice(0, 8).toUpperCase()}.pdf`);
       toast.dismiss('dl-pdf');
       toast.success('PDF downloaded!');
