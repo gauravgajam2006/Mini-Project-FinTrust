@@ -117,10 +117,10 @@ export const LoanProvider = ({ children }) => {
         user_id: dbLoan.user_id,
         created_by: dbLoan.created_by,
         type: computedType,
-        amount: parseFloat(dbLoan.amount),
-        amountPaid: parseFloat(dbLoan.amount_paid) || 0,
-        currency: dbLoan.currency,
-        interestRate: parseFloat(dbLoan.interest_rate) || 0,
+        amount: parseFloat(dbLoan?.amount) || 0,
+        amountPaid: parseFloat(dbLoan?.amount_paid) || 0,
+        currency: dbLoan?.currency,
+        interestRate: parseFloat(dbLoan?.interest_rate) || 0,
         borrowerName: dbLoan.borrower_name,
         borrowerEmail: dbLoan.borrower_email,
         lenderName: dbLoan.lender_name,
@@ -144,23 +144,23 @@ export const LoanProvider = ({ children }) => {
     const getLoansByUser = (filter = 'all') => {
         if (filter === 'all') return loans;
         if (filter === 'lent' || filter === 'borrowed') {
-            return loans.filter(l => l.type === filter);
+            return loans.filter(l => l?.type === filter);
         }
         // status-based filter
-        return loans.filter(l => l.status === filter);
+        return loans.filter(l => l?.status === filter);
     };
 
     // GET REPAYMENTS FOR A SPECIFIC LOAN
     const getRepaymentsByLoan = (loanId) => {
-        const loan = loans.find(l => l.id === loanId);
+        const loan = loans.find(l => l?.id === loanId);
         return loan?.payments || [];
     };
 
     // CALCULATE OUTSTANDING AMOUNT
     const calculateOutstandingAmount = (loanId) => {
-        const loan = loans.find(l => l.id === loanId);
+        const loan = loans.find(l => l?.id === loanId);
         if (!loan) return 0;
-        return Math.max(0, loan.amount - loan.amountPaid);
+        return Math.max(0, (loan?.amount || 0) - (loan?.amountPaid || 0));
     };
 
     // FETCH LOANS
@@ -172,7 +172,7 @@ export const LoanProvider = ({ children }) => {
             const { data, error } = await supabase
                 .from('loans')
                 .select('*, payments(*)')
-                .or(`user_id.eq.${user.id},borrower_email.ilike.${user.email},lender_email.ilike.${user.email}`)
+                .or(`user_id.eq.${user?.id},borrower_email.ilike.%${user?.email}%,lender_email.ilike.%${user?.email}%`)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
@@ -182,6 +182,7 @@ export const LoanProvider = ({ children }) => {
             checkDueDates(loadedLoans);
         } catch (error) {
             console.error('Error fetching loans:', error.message);
+            toast.error(error.message);
         } finally {
             setLoading(false);
         }
@@ -202,6 +203,7 @@ export const LoanProvider = ({ children }) => {
             setActivities(data);
         } catch (error) {
             console.error('Error fetching activities:', error.message);
+            toast.error(error.message);
         }
     };
 
@@ -261,6 +263,7 @@ export const LoanProvider = ({ children }) => {
             setUnreadNotificationCount((data || []).filter(n => !n.is_read).length);
         } catch (error) {
             console.error('Error fetching notifications:', error.message);
+            toast.error(error.message);
         }
     };
 
@@ -418,6 +421,7 @@ export const LoanProvider = ({ children }) => {
             return { success: true };
         } catch (error) {
             console.error('Error responding to loan:', error);
+            toast.error(error.message);
             return { success: false, error: error.message };
         }
     };
@@ -548,6 +552,7 @@ export const LoanProvider = ({ children }) => {
             return { success: true, loan: mappedLoan };
         } catch (error) {
             console.error('Error creating loan:', error);
+            toast.error(error.message);
             return { success: false, error: error.message };
         } finally {
             setLoading(false);
@@ -584,6 +589,7 @@ export const LoanProvider = ({ children }) => {
             return { success: true };
         } catch (error) {
             console.error('Error updating loan:', error);
+            toast.error(error.message);
             return { success: false, error: error.message };
         } finally {
             setLoading(false);
@@ -607,9 +613,9 @@ export const LoanProvider = ({ children }) => {
             setLoans(prev => prev.filter(loan => loan.id !== loanId));
             return { success: true };
         } catch (error) {
-            console.error('Error deleting loan:', error);
             // Revert state just in case, though it shouldn't have changed yet
             toast.error(error.message || 'Failed to delete loan.');
+            console.error('Error deleting loan:', error);
             return { success: false, error: error.message };
         } finally {
             setLoading(false);
@@ -702,20 +708,26 @@ export const LoanProvider = ({ children }) => {
 
         // Prevent concurrent/duplicate submissions
         if (paymentInProgress) {
+            toast.error('Payment blocked: A transaction is already in progress.');
             return { success: false, error: 'Payment already in progress. Please wait.' };
         }
         setPaymentInProgress(true);
         setLoading(true);
 
-        // Generate a unique transaction_id for idempotency
-        const transactionId = crypto.randomUUID();
+        const transactionId = paymentData?.transactionId;
+        if (!transactionId) {
+            setPaymentInProgress(false);
+            setLoading(false);
+            toast.error('Payment blocked: No unique transaction ID available.');
+            return { success: false, error: 'Transaction ID is required' };
+        }
 
         try {
             const newPayment = {
                 loan_id: loanId,
-                user_id: user.id,
-                amount: parseFloat(paymentData.amount),
-                date: paymentData.date,
+                user_id: user?.id,
+                amount: parseFloat(paymentData?.amount) || 0,
+                date: paymentData?.date || new Date().toISOString(),
                 status: 'completed',
                 transaction_id: transactionId
             };
@@ -798,6 +810,7 @@ export const LoanProvider = ({ children }) => {
             return { success: true, payment: data };
         } catch (error) {
             console.error('Error adding repayment:', error);
+            toast.error(error.message);
             return { success: false, error: error.message };
         } finally {
             setPaymentInProgress(false);
@@ -807,23 +820,19 @@ export const LoanProvider = ({ children }) => {
 
     // UPDATE LOAN STATUS
     const updateLoanStatus = async (loanId) => {
-        // Re-read fresh loan data to avoid stale closure
-        const freshLoans = await new Promise(resolve => {
-            setLoans(prev => { resolve(prev); return prev; });
-        });
-        const loan = freshLoans.find(l => l.id === loanId);
+        const loan = loans.find(l => l?.id === loanId);
         if (!loan) return { success: false };
 
-        let newStatus = loan.status;
-        const outstanding = loan.amount - loan.amountPaid;
+        let newStatus = loan?.status;
+        const outstanding = (parseFloat(loan?.amount) || 0) - (parseFloat(loan?.amountPaid) || 0);
         const today = new Date();
-        const dueDate = new Date(loan.dueDate);
+        const dueDate = new Date(loan?.dueDate);
 
         if (outstanding <= 0) newStatus = 'completed';
         else if (dueDate < today) newStatus = 'overdue';
         else newStatus = 'active';
 
-        if (newStatus !== loan.status) {
+        if (newStatus !== loan?.status) {
             await updateLoan(loanId, { status: newStatus });
             if (newStatus === 'completed') updateStatsOnLoanComplete();
         }

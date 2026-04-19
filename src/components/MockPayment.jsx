@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './MockPayment.css';
 
 const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
@@ -6,6 +6,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
     const [selectedMethod, setSelectedMethod] = useState('upi');
     const [upiId, setUpiId] = useState('');
     const [isProcessing, setIsProcessing] = useState(false); // Prevents duplicate payment triggers
+    const processingRef = useRef(false);
 
     const paymentMethods = [
         { id: 'upi', name: 'UPI', icon: '📱', description: 'Pay via UPI apps' },
@@ -23,7 +24,9 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
 
     const handlePayment = () => {
         // Prevent duplicate payment triggers
-        if (isProcessing) return;
+        if (processingRef.current) return;
+        
+        processingRef.current = true;
         setIsProcessing(true);
         setStep('processing');
 
@@ -38,7 +41,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                 // Generate mock payment data with unique transaction_id
                 const paymentData = {
                     paymentId: `PAY${Date.now()}`,
-                    transactionId: crypto.randomUUID(),
+                    transactionId: window.crypto?.randomUUID?.() || `txn_${Date.now()}`,
                     amount: amount,
                     method: selectedMethod === 'upi' ? `UPI (${upiId || 'success@upi'})` : selectedMethod,
                     timestamp: new Date().toISOString(),
@@ -47,20 +50,21 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
 
                 // Call success callback after short delay
                 setTimeout(() => {
-                    onSuccess(paymentData);
+                    if (processingRef.current) {
+                        onSuccess(paymentData);
+                        processingRef.current = false;
+                        setIsProcessing(false);
+                    }
                 }, 1500);
             } else {
                 setStep('failed');
+                processingRef.current = false;
                 setIsProcessing(false); // Allow retry on failure
             }
         }, 2000);
     };
 
-    const generateQRCode = () => {
-        // Mock QR code data
-        const qrData = `upi://pay?pa=fintrust@upi&pn=FINTRUST&am=${amount}&cu=INR&tn=Loan Payment`;
-        return qrData;
-    };
+    const isValidUpi = /^[\w.-]+@[\w]+$/.test(upiId);
 
     return (
         <div className="mock-payment-overlay">
@@ -74,8 +78,8 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                 {/* Amount Display */}
                 <div className="payment-amount">
                     <div className="amount-label">Amount to Pay</div>
-                    <div className="amount-value">₹{amount.toLocaleString()}</div>
-                    <div className="amount-detail">Loan ID: {loan.id}</div>
+                    <div className="amount-value">₹{(amount || 0).toLocaleString()}</div>
+                    <div className="amount-detail">Loan ID: {loan?.id}</div>
                 </div>
 
                 {/* Payment Methods Step */}
@@ -133,7 +137,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                                 {/* UPI Apps */}
                                 <div className="upi-apps">
                                     {upiApps.map(app => (
-                                        <div key={app.id} className={`upi-app ${isProcessing ? 'disabled' : ''}`} onClick={!isProcessing ? handlePayment : undefined}>
+                                        <div key={app.id} className="upi-app" onClick={() => setSelectedMethod('upi')}>
                                             <div className="app-icon">{app.icon}</div>
                                             <div className="app-name">{app.name}</div>
                                         </div>
@@ -163,9 +167,9 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                             <button
                                 className="btn-pay"
                                 onClick={handlePayment}
-                                disabled={isProcessing || (!upiId && selectedMethod === 'upi')}
+                                disabled={isProcessing || (selectedMethod === 'upi' && !isValidUpi)}
                             >
-                                {isProcessing ? 'Processing...' : `Pay ₹${amount.toLocaleString()}`}
+                                {isProcessing ? 'Processing...' : `Pay ₹${(amount || 0).toLocaleString()}`}
                             </button>
                         )}
                     </div>
@@ -193,7 +197,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                         <div className="success-icon">✓</div>
                         <h3>Payment Successful!</h3>
                         <p>Your payment has been processed successfully</p>
-                        <div className="success-amount">₹{amount.toLocaleString()}</div>
+                        <div className="success-amount">₹{(amount || 0).toLocaleString()}</div>
                         <div className="success-details">
                             <div className="detail-row">
                                 <span>Payment Method:</span>
@@ -218,7 +222,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                         <h3>Payment Failed</h3>
                         <p>Unable to process your payment. Please try again.</p>
                         <div className="failed-actions">
-                            <button className="btn-retry" onClick={() => { setStep('methods'); setIsProcessing(false); }}>
+                            <button className="btn-retry" onClick={() => { setStep('methods'); setIsProcessing(false); processingRef.current = false; }}>
                                 Try Again
                             </button>
                             <button className="btn-cancel-failed" onClick={onCancel}>
