@@ -8,8 +8,9 @@
     background: rgba(15, 23, 42, 0.75);
     backdrop-filter: blur(10px);
     display: flex;
-    align-items: center;
+    align-items: flex-start; /* Change to flex-start to move it up */
     justify-content: center;
+    padding-top: 8vh; /* Control how far from the top it appears */
     z-index: 9999;
     animation: fadeIn 0.3s ease-out;
 }
@@ -25,8 +26,7 @@
     box-shadow: var(--shadow-xl);
     border: 1px solid var(--color-border);
     overflow: hidden;
-    position: relative; /* Ensure relative for inner positioning */
-    margin: auto; /* Fallback centering */
+    position: relative; 
     animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
