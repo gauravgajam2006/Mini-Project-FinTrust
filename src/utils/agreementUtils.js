@@ -673,6 +673,72 @@ export async function createAgreement(data) {
 }
 
 /**
+ * Update an existing loan agreement
+ */
+export async function updateAgreement(agreementId, data) {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Look up lender profile by email
+    let lenderId = null;
+    if (data.lenderEmail) {
+      const { data: lenderProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('email', data.lenderEmail.toLowerCase())
+        .single();
+      lenderId = lenderProfile?.id || null;
+    }
+
+    // Update the agreement
+    const { data: agreement, error } = await supabase
+      .from('loan_agreements')
+      .update({
+        principal_amount: data.principalAmount,
+        interest_rate: data.interestRate || 0,
+        tenure_months: data.tenureMonths || 1,
+        repayment_schedule: data.repaymentSchedule || 'monthly',
+        currency: data.currency || 'INR',
+        purpose: data.purpose || '',
+        lender_id: lenderId,
+      })
+      .eq('id', agreementId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Update parties
+    // Note: This assumes parties already exist and replaces their info
+    const roles = ['borrower', 'lender', 'guarantor'];
+    for (const role of roles) {
+      const partyData = {
+        full_name: role === 'borrower' ? data.borrowerName : role === 'lender' ? data.lenderName : data.guarantorName,
+        email: role === 'borrower' ? data.borrowerEmail : role === 'lender' ? data.lenderEmail : data.guarantorEmail,
+        phone: role === 'borrower' ? data.borrowerPhone : role === 'lender' ? data.lenderPhone : data.guarantorPhone,
+        aadhaar: role === 'borrower' ? data.borrowerAadhaar : role === 'lender' ? data.lenderAadhaar : data.guarantorAadhaar,
+        address: role === 'borrower' ? data.borrowerAddress : role === 'lender' ? data.lenderAddress : data.guarantorAddress,
+        user_id: role === 'borrower' ? user.id : role === 'lender' ? lenderId : null,
+      };
+
+      const { error: partyError } = await supabase
+        .from('agreement_parties')
+        .update(partyData)
+        .eq('agreement_id', agreementId)
+        .eq('role', role);
+
+      if (partyError) throw partyError;
+    }
+
+    return { success: true, agreement };
+  } catch (error) {
+    console.error('Error updating agreement:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
  * Fetch full agreement details including parties, signatures, documents, risk
  */
 export async function fetchAgreementDetails(agreementId) {

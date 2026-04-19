@@ -646,6 +646,17 @@
   padding-left: 0.75rem;
 }
 
+.ag-btn-edit {
+  background: rgba(99, 102, 241, 0.05) !important;
+  color: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+}
+
+.ag-btn-edit:hover {
+  background: var(--color-primary) !important;
+  color: #fff !important;
+}
+
 /* ---- DETAIL MODAL ---- */
 .agreement-detail-overlay {
   position: fixed;

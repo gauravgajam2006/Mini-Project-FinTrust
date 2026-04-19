@@ -14,6 +14,7 @@ import {
   fetchAgreementDetails,
   generateAgreementPDF,
   getDocumentSignedURL,
+  updateAgreement,
 } from '../utils/agreementUtils';
 import toast from 'react-hot-toast';
 import './LoanAgreement.css';
@@ -162,26 +163,37 @@ const LoanAgreement = () => {
   const nextStep = async () => {
     if (!validateStep(currentStep)) return;
 
-    // After step 3 (guarantor), create agreement
+    // After step 3 (guarantor), create or update agreement
     if (currentStep === 3) {
       setCurrentStep(4);
 
       try {
-        // Create agreement in DB
-        const createResult = await createAgreement(formData);
-        if (!createResult.success) {
-          toast.error('Failed to create agreement: ' + createResult.error);
-          setCurrentStep(3);
-          return;
+        let targetAgId = agreementId;
+        if (agreementId) {
+          // Update existing agreement
+          const updateResult = await updateAgreement(agreementId, formData);
+          if (!updateResult.success) {
+            toast.error('Failed to update agreement: ' + updateResult.error);
+            setCurrentStep(3);
+            return;
+          }
+        } else {
+          // Create agreement in DB
+          const createResult = await createAgreement(formData);
+          if (!createResult.success) {
+            toast.error('Failed to create agreement: ' + createResult.error);
+            setCurrentStep(3);
+            return;
+          }
+          targetAgId = createResult.agreement.id;
+          setAgreementId(targetAgId);
         }
 
-        setAgreementId(createResult.agreement.id);
-
         // Update agreement status
-        await updateAgreementStatus(createResult.agreement.id, 'pending_borrower_signature');
+        await updateAgreementStatus(targetAgId, 'pending_borrower_signature');
       } catch (error) {
-        console.error('Error creating agreement:', error);
-        toast.error('Creation failed');
+        console.error('Error saving agreement:', error);
+        toast.error('Save failed');
       }
       return;
     }
@@ -350,6 +362,59 @@ const LoanAgreement = () => {
       setSelectedAgreement(result.data);
     } else {
       toast.error('Failed to load details');
+    }
+  };
+
+  const handleEditAgreement = async (agId) => {
+    try {
+      toast.loading('Loading agreement details...', { id: 'edit-load' });
+      const result = await fetchAgreementDetails(agId);
+      if (!result.success) throw new Error(result.error);
+
+      const ag = result.data;
+      const borrower = ag.parties.find(p => p.role === 'borrower') || {};
+      const lender = ag.parties.find(p => p.role === 'lender') || {};
+      const guarantor = ag.parties.find(p => p.role === 'guarantor') || {};
+
+      setFormData({
+        principalAmount: ag.principal_amount,
+        interestRate: ag.interest_rate,
+        tenureMonths: ag.tenure_months,
+        repaymentSchedule: ag.repayment_schedule,
+        currency: ag.currency,
+        purpose: ag.purpose,
+        lenderName: lender.full_name || '',
+        lenderEmail: lender.email || '',
+        lenderPhone: lender.phone || '',
+        borrowerName: borrower.full_name || '',
+        borrowerEmail: borrower.email || '',
+        borrowerPhone: borrower.phone || '',
+        borrowerAadhaar: borrower.aadhaar || '',
+        borrowerAddress: borrower.address || '',
+        guarantorName: guarantor.full_name || '',
+        guarantorEmail: guarantor.email || '',
+        guarantorPhone: guarantor.phone || '',
+        guarantorAadhaar: guarantor.aadhaar || '',
+        guarantorAddress: guarantor.address || '',
+      });
+
+      setAgreementId(ag.id);
+      
+      // Determine step
+      if (ag.status === 'pending_borrower_signature') {
+        setCurrentStep(4);
+      } else if (ag.status === 'pending_lender_review') {
+        setCurrentStep(5);
+      } else {
+        setCurrentStep(1);
+      }
+
+      setShowAgreementsList(false);
+      toast.dismiss('edit-load');
+      toast.success('Ready to edit');
+    } catch (error) {
+      toast.dismiss('edit-load');
+      toast.error('Failed to load for editing: ' + error.message);
     }
   };
 
@@ -794,14 +859,14 @@ const LoanAgreement = () => {
                       
                       {/* Lender approve/reject buttons */}
                       {ag.status === 'pending_lender_review' && isLenderForAgreement(ag) && (
-                        <>
-                          <button className="ag-btn ag-btn-approve" onClick={() => initLenderApprove(ag.id)} disabled={isGeneratingPDF}>
-                            ✅ Approve & Sign
-                          </button>
-                          <button className="ag-btn ag-btn-reject" onClick={() => handleLenderReject(ag.id)}>
-                            ❌ Reject
-                          </button>
                         </>
+                      )}
+
+                      {/* Edit button for pending agreements (only for borrower) */}
+                      {!['active', 'completed', 'rejected'].includes(ag.status) && ag.borrower_id === user?.id && (
+                        <button className="ag-btn ag-btn-edit" onClick={() => handleEditAgreement(ag.id)}>
+                          ✏️ Edit
+                        </button>
                       )}
                     </div>
 
