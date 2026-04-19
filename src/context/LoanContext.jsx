@@ -715,12 +715,10 @@ export const LoanProvider = ({ children }) => {
         setPaymentInProgress(true);
         setLoading(true);
 
-        const transactionId = paymentData?.transactionId;
+        let transactionId = paymentData?.transactionId;
+
         if (!transactionId) {
-            setPaymentInProgress(false);
-            setLoading(false);
-            toast.error('Payment blocked: No unique transaction ID available.');
-            return { success: false, error: 'Transaction ID is required' };
+            transactionId = window.crypto?.randomUUID?.() || `txn_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
         }
 
         try {

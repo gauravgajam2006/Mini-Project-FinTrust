@@ -25,6 +25,7 @@ const LoanDetails = () => {
     }, [loan, navigate, showDeleteModal]);
 
     const handleAddPayment = async (paymentData) => {
+        console.log("PAYMENT DATA SENT:", paymentData);
         const result = await addRepayment(id, paymentData);
         if (result.success) {
             setShowPaymentForm(false);
