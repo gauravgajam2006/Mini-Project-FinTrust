@@ -319,7 +319,18 @@ export function generateAgreementPDF(agreementData) {
   y += 7;
   
   addText('Agreement Status:', margin, y, 10, 'bold');
-  addText(agreementData.status?.toUpperCase() || 'DRAFT', margin + 50, y);
+  const statusDisplayMap = {
+    'draft': 'DRAFT',
+    'pending_guarantor': 'PENDING GUARANTOR',
+    'pending_borrower_signature': 'PENDING SIGNATURE',
+    'pending_lender_review': 'AWAITING LENDER APPROVAL',
+    'pending_lender_signature': 'LENDER SIGNING',
+    'active': 'ACTIVE - APPROVED',
+    'completed': 'COMPLETED',
+    'rejected': 'REJECTED',
+    'cancelled': 'CANCELLED',
+  };
+  addText(statusDisplayMap[agreementData.status] || agreementData.status?.toUpperCase() || 'DRAFT', margin + 50, y);
   y += 12;
 
   drawLine(y);
@@ -378,6 +389,11 @@ export function generateAgreementPDF(agreementData) {
   y = doc.lastAutoTable.finalY + 15;
 
   // ---- LENDER DETAILS ----
+  // Ensure title + table stay on the same page (need ~70pt minimum)
+  if (y > 220) {
+    doc.addPage();
+    y = 20;
+  }
   addCenteredText('LENDER DETAILS', y, 13, 'bold');
   y += 10;
 

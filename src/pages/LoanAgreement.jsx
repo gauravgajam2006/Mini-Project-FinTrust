@@ -733,7 +733,7 @@ const LoanAgreement = () => {
       <div className="page-header-ag">
         <div className="header-left-ag">
           <h1>📄 Loan Agreements</h1>
-          <p>Create verified loan agreements with digital signatures & AI fraud detection</p>
+          <p>Create verified loan agreements with digital signatures</p>
         </div>
         <div className="header-actions-ag">
           <button
@@ -767,7 +767,6 @@ const LoanAgreement = () => {
                     <div className="detail-row"><span>Interest:</span><strong>{selectedAgreement.interest_rate}% p.a.</strong></div>
                     <div className="detail-row"><span>Tenure:</span><strong>{selectedAgreement.tenure_months} months</strong></div>
                     <div className="detail-row"><span>Status:</span>{getStatusBadge(selectedAgreement.status)}</div>
-                    <div className="detail-row"><span>Risk:</span><strong>{selectedAgreement.risk_level ? getRiskBadge(selectedAgreement.risk_level) : 'N/A'}</strong></div>
                   </div>
                   <h3 style={{ margin: '1rem 0 0.5rem' }}>Parties</h3>
                   {selectedAgreement.parties?.map((p, i) => (
@@ -777,12 +776,6 @@ const LoanAgreement = () => {
                       <span className="party-email">{p.email}</span>
                     </div>
                   ))}
-                  {selectedAgreement.risk_assessment && (
-                    <>
-                      <h3 style={{ margin: '1rem 0 0.5rem' }}>Risk Assessment</h3>
-                      <RiskScoreDisplay assessment={selectedAgreement.risk_assessment} />
-                    </>
-                  )}
                   <div className="detail-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
                     {canEditAgreement(selectedAgreement) && (
                       <button className="ag-btn ag-btn-edit" style={{ flex: 1 }} onClick={() => {
@@ -881,12 +874,7 @@ const LoanAgreement = () => {
                           <span key={i} className={`party-chip role-${p.role}`}>{p.role}: {p.full_name}</span>
                         ))}
                       </div>
-                      {ag.risk_assessments?.[0] && (
-                        <div className="ag-card-risk">
-                          Risk: {getRiskBadge(ag.risk_assessments[0].risk_level)} ({ag.risk_assessments[0].overall_score}/100)
-                        </div>
-                      )}
-                    </div>
+                      </div>
                     <div className="ag-card-actions">
                       <button className="ag-btn ag-btn-view" onClick={() => handleViewDetails(ag.id)}>👁️ Details</button>
                       
