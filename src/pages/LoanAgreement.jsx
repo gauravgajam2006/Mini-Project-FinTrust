@@ -472,6 +472,23 @@ const LoanAgreement = () => {
       ag.agreement_parties?.some(p => p.role === 'lender' && p.email?.toLowerCase() === user?.email?.toLowerCase());
   };
 
+  const canEditAgreement = (ag) => {
+    if (!user || !ag) return false;
+    const userEmail = user.email?.toLowerCase();
+    const userName = user.name?.toLowerCase();
+    
+    const isBorrower = ag.borrower_id === user?.id || 
+                       ag.created_by === user?.id ||
+                       ag.agreement_parties?.some(p => 
+                         p.role === 'borrower' && (
+                           p.user_id === user?.id || 
+                           (p.email && userEmail && p.email.toLowerCase() === userEmail) ||
+                           (p.full_name && userName && p.full_name.toLowerCase() === userName)
+                         )
+                       );
+    return isBorrower && !['active', 'completed', 'rejected'].includes(ag.status);
+  };
+
   // ============================================================
   // RENDER STEPS
   // ============================================================
@@ -766,7 +783,16 @@ const LoanAgreement = () => {
                       <RiskScoreDisplay assessment={selectedAgreement.risk_assessment} />
                     </>
                   )}
-                  <div className="detail-actions">
+                  <div className="detail-actions" style={{ display: 'flex', gap: '0.75rem', marginTop: '1.5rem', flexWrap: 'wrap' }}>
+                    {canEditAgreement(selectedAgreement) && (
+                      <button className="ag-btn ag-btn-edit" style={{ flex: 1 }} onClick={() => {
+                        const id = selectedAgreement.id;
+                        setSelectedAgreement(null);
+                        handleEditAgreement(id);
+                      }}>
+                        ✏️ Edit Agreement
+                      </button>
+                    )}
                     <button 
                       className="btn-primary" 
                       onClick={() => handleDownloadPDF(selectedAgreement.id)}
@@ -863,9 +889,16 @@ const LoanAgreement = () => {
                     </div>
                     <div className="ag-card-actions">
                       <button className="ag-btn ag-btn-view" onClick={() => handleViewDetails(ag.id)}>👁️ Details</button>
+                      
+                      {canEditAgreement(ag) && (
+                        <button className="ag-btn ag-btn-edit" onClick={(e) => { e.stopPropagation(); handleEditAgreement(ag.id); }}>
+                          ✏️ Edit
+                        </button>
+                      )}
+
                       <button 
                         className="ag-btn ag-btn-pdf" 
-                        onClick={() => handleDownloadPDF(ag.id)}
+                        onClick={(e) => { e.stopPropagation(); handleDownloadPDF(ag.id); }}
                         disabled={!['active', 'completed'].includes(ag.status)}
                         title={!['active', 'completed'].includes(ag.status) ? "Available after lender approval" : ""}
                       >
@@ -888,13 +921,6 @@ const LoanAgreement = () => {
                             ❌ Reject
                           </button>
                         </div>
-                      )}
-
-                      {/* Edit button for pending agreements (only for borrower) */}
-                      {!['active', 'completed', 'rejected'].includes(ag.status) && ag.borrower_id === user?.id && (
-                        <button className="ag-btn ag-btn-edit" onClick={() => handleEditAgreement(ag.id)}>
-                          ✏️ Edit
-                        </button>
                       )}
                     </div>
 
