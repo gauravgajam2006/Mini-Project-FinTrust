@@ -19,8 +19,8 @@ const LoanDetails = () => {
     const outstandingAmount = calculateOutstandingAmount(id);
     
     // Always derive completion and remaining exactly
-    const remaining = loan ? loan.amount - loan.amountPaid : 0;
-    const isCompleted = loan ? remaining <= 0 : false;
+    const remaining = loan ? Math.max(0, loan.amount - loan.amountPaid) : 0;
+    const isCompleted = loan ? remaining < 0.01 : false;
 
     useEffect(() => {
         if (!loan && !showDeleteModal) {
@@ -170,7 +170,7 @@ const LoanDetails = () => {
                                 </span>
                             </div>
                         </div>
-                        <span className={`status-badge-large ${loan.status}`}>{loan.status}</span>
+                        <span className={`status-badge-large ${isCompleted ? 'completed' : loan.status}`}>{isCompleted ? 'completed' : loan.status}</span>
                     </div>
 
                     <div className="amount-section">

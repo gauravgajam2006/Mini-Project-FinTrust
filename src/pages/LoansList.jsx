@@ -85,8 +85,8 @@ const LoansList = () => {
                                             </span>
                                         </div>
                                     </div>
-                                    <span className={`status-badge ${(loan.amount - loan.amountPaid <= 0) ? 'completed' : loan.status}`}>
-                                        {(loan.amount - loan.amountPaid <= 0) ? 'completed' : loan.status}
+                                    <span className={`status-badge ${(loan.amount - loan.amountPaid < 0.01) ? 'completed' : loan.status}`}>
+                                        {(loan.amount - loan.amountPaid < 0.01) ? 'completed' : loan.status}
                                     </span>
                                 </div>
 
@@ -107,7 +107,7 @@ const LoansList = () => {
                                 <div className="loan-footer">
                                     <div className="loan-meta">
                                         <span>📅 Due: {formatDate(loan.dueDate)}</span>
-                                        {loan.status === 'active' && (loan.amount - loan.amountPaid > 0) && (
+                                        {loan.status === 'active' && (loan.amount - loan.amountPaid >= 0.01) && (
                                             <span className={daysRemaining < 0 ? 'overdue-text' : 'days-text'}>
                                                 {daysRemaining < 0 ? `${Math.abs(daysRemaining)} days overdue` : `${daysRemaining} days left`}
                                             </span>

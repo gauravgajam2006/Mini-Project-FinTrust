@@ -155,7 +155,7 @@ const Dashboard = () => {
                                                 <div className="loan-name">{loan.borrowerName}</div>
                                             </td>
                                             <td className="amount">{formatCurrency(loan.amount)}</td>
-                                            <td><span className={`status-badge ${(loan.amount - loan.amountPaid <= 0) ? 'completed' : loan.status}`}>{(loan.amount - loan.amountPaid <= 0) ? 'completed' : loan.status}</span></td>
+                                            <td><span className={`status-badge ${(loan.amount - loan.amountPaid < 0.01) ? 'completed' : loan.status}`}>{(loan.amount - loan.amountPaid < 0.01) ? 'completed' : loan.status}</span></td>
                                             <td><Link to={`/loan/${loan.id}`} className="btn-view">View</Link></td>
                                         </tr>
                                     ))}
@@ -191,7 +191,7 @@ const Dashboard = () => {
                                                 <div className="loan-name">{loan.lenderName}</div>
                                             </td>
                                             <td className="amount">{formatCurrency(loan.amount)}</td>
-                                            <td><span className={`status-badge ${(loan.amount - loan.amountPaid <= 0) ? 'completed' : loan.status}`}>{(loan.amount - loan.amountPaid <= 0) ? 'completed' : loan.status}</span></td>
+                                            <td><span className={`status-badge ${(loan.amount - loan.amountPaid < 0.01) ? 'completed' : loan.status}`}>{(loan.amount - loan.amountPaid < 0.01) ? 'completed' : loan.status}</span></td>
                                             <td><Link to={`/loan/${loan.id}`} className="btn-view">View</Link></td>
                                         </tr>
                                     ))}
