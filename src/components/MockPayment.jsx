@@ -5,6 +5,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
     const [step, setStep] = useState('methods'); // methods, processing, success, failed
     const [selectedMethod, setSelectedMethod] = useState('upi');
     const [upiId, setUpiId] = useState('');
+    const [isProcessing, setIsProcessing] = useState(false); // Prevents duplicate payment triggers
 
     const paymentMethods = [
         { id: 'upi', name: 'UPI', icon: '📱', description: 'Pay via UPI apps' },
@@ -21,6 +22,9 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
     ];
 
     const handlePayment = () => {
+        // Prevent duplicate payment triggers
+        if (isProcessing) return;
+        setIsProcessing(true);
         setStep('processing');
 
         // Simulate payment processing (2 seconds)
@@ -31,10 +35,10 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
             if (success) {
                 setStep('success');
 
-                // Generate mock payment data
+                // Generate mock payment data with unique transaction_id
                 const paymentData = {
                     paymentId: `PAY${Date.now()}`,
-                    transactionId: `TXN${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
+                    transactionId: crypto.randomUUID(),
                     amount: amount,
                     method: selectedMethod === 'upi' ? `UPI (${upiId || 'success@upi'})` : selectedMethod,
                     timestamp: new Date().toISOString(),
@@ -47,6 +51,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                 }, 1500);
             } else {
                 setStep('failed');
+                setIsProcessing(false); // Allow retry on failure
             }
         }, 2000);
     };
@@ -128,7 +133,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                                 {/* UPI Apps */}
                                 <div className="upi-apps">
                                     {upiApps.map(app => (
-                                        <div key={app.id} className="upi-app" onClick={handlePayment}>
+                                        <div key={app.id} className={`upi-app ${isProcessing ? 'disabled' : ''}`} onClick={!isProcessing ? handlePayment : undefined}>
                                             <div className="app-icon">{app.icon}</div>
                                             <div className="app-name">{app.name}</div>
                                         </div>
@@ -146,8 +151,8 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                                         {selectedMethod === 'netbanking' && '🏦 Select your bank to continue'}
                                         {selectedMethod === 'wallet' && '👛 Choose your wallet provider'}
                                     </p>
-                                    <button className="btn-proceed" onClick={handlePayment}>
-                                        Proceed with {selectedMethod}
+                                    <button className="btn-proceed" onClick={handlePayment} disabled={isProcessing}>
+                                        {isProcessing ? 'Processing...' : `Proceed with ${selectedMethod}`}
                                     </button>
                                 </div>
                             </div>
@@ -158,9 +163,9 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                             <button
                                 className="btn-pay"
                                 onClick={handlePayment}
-                                disabled={!upiId && selectedMethod === 'upi'}
+                                disabled={isProcessing || (!upiId && selectedMethod === 'upi')}
                             >
-                                Pay ₹{amount.toLocaleString()}
+                                {isProcessing ? 'Processing...' : `Pay ₹${amount.toLocaleString()}`}
                             </button>
                         )}
                     </div>
@@ -213,7 +218,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                         <h3>Payment Failed</h3>
                         <p>Unable to process your payment. Please try again.</p>
                         <div className="failed-actions">
-                            <button className="btn-retry" onClick={() => setStep('methods')}>
+                            <button className="btn-retry" onClick={() => { setStep('methods'); setIsProcessing(false); }}>
                                 Try Again
                             </button>
                             <button className="btn-cancel-failed" onClick={onCancel}>

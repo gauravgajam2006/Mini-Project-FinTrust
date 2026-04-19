@@ -17,6 +17,7 @@ export const LoanProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [paymentInProgress, setPaymentInProgress] = useState(false); // Prevents duplicate payment submissions
     const [gamification, setGamification] = useState({
         points: 0,
         level: 1,
@@ -695,17 +696,28 @@ export const LoanProvider = ({ children }) => {
         setLoans([]);
     };
 
-    // ADD REPAYMENT
+    // ADD REPAYMENT — with idempotency guard and transaction_id
     const addRepayment = async (loanId, paymentData) => {
         if (!user) return { success: false, error: 'User not authenticated' };
+
+        // Prevent concurrent/duplicate submissions
+        if (paymentInProgress) {
+            return { success: false, error: 'Payment already in progress. Please wait.' };
+        }
+        setPaymentInProgress(true);
         setLoading(true);
+
+        // Generate a unique transaction_id for idempotency
+        const transactionId = crypto.randomUUID();
+
         try {
             const newPayment = {
                 loan_id: loanId,
                 user_id: user.id,
                 amount: parseFloat(paymentData.amount),
                 date: paymentData.date,
-                status: 'completed'
+                status: 'completed',
+                transaction_id: transactionId
             };
 
             const { data, error } = await supabase
@@ -714,30 +726,44 @@ export const LoanProvider = ({ children }) => {
                 .select()
                 .single();
 
-            if (error) throw error;
+            if (error) {
+                // Handle unique constraint violation gracefully
+                if (error.code === '23505' && error.message.includes('unique_transaction')) {
+                    return { success: false, error: 'This payment has already been processed.' };
+                }
+                throw error;
+            }
+
+            // Re-fetch the loan from DB to get the trigger-updated amount_paid
+            // (The DB trigger calculate_payment_trust_delta already updates amount_paid)
+            const { data: freshLoan, error: loanFetchErr } = await supabase
+                .from('loans')
+                .select('*, payments(*)')
+                .eq('id', loanId)
+                .single();
+
+            if (!loanFetchErr && freshLoan) {
+                const mappedLoan = mapLoanFromDB(freshLoan);
+                setLoans(prev => prev.map(l => l.id === loanId ? mappedLoan : l));
+            } else {
+                // Fallback: optimistic local update
+                const loan = loans.find(l => l.id === loanId);
+                const updatedAmountPaid = (loan?.amountPaid || 0) + parseFloat(paymentData.amount);
+                setLoans(prev => prev.map(l => l.id === loanId ? {
+                    ...l,
+                    payments: [data, ...(l.payments || [])],
+                    amountPaid: updatedAmountPaid
+                } : l));
+            }
 
             const loan = loans.find(l => l.id === loanId);
-            const updatedAmountPaid = (loan.amountPaid || 0) + parseFloat(paymentData.amount);
-
-            await supabase
-                .from('loans')
-                .update({ amount_paid: updatedAmountPaid, updated_at: new Date().toISOString() })
-                .eq('id', loanId);
-
-            setLoans(prev => prev.map(l => l.id === loanId ? {
-                ...l,
-                payments: [data, ...(l.payments || [])],
-                amountPaid: updatedAmountPaid
-            } : l));
-
-            updateStatsOnPayment(paymentData.date, loan.dueDate);
+            updateStatsOnPayment(paymentData.date, loan?.dueDate);
             logActivity('PAYMENT_MADE', `Payment of ₹${paymentData.amount} made`, loanId);
-            await updateLoanStatus(loanId);
 
             // --- NOTIFY THE LENDER ---
             try {
                 // Note: since only the borrower can make payments now, the counterparty must be the lender.
-                const lenderEmail = loan.lenderEmail;
+                const lenderEmail = loan?.lenderEmail;
                 if (lenderEmail && lenderEmail !== user.email) {
                     const { data: lenderProfile } = await supabase
                         .from('profiles')
@@ -774,6 +800,7 @@ export const LoanProvider = ({ children }) => {
             console.error('Error adding repayment:', error);
             return { success: false, error: error.message };
         } finally {
+            setPaymentInProgress(false);
             setLoading(false);
         }
     };
