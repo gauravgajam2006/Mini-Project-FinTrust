@@ -769,7 +769,7 @@ export const LoanProvider = ({ children }) => {
             }
 
             const loan = loans.find(l => l.id === loanId) || (freshLoan ? mapLoanFromDB(freshLoan, user) : null);
-            updateStatsOnPayment(paymentData.date, loan?.dueDate);
+            await updateStatsOnPayment(paymentData.date, loan?.dueDate);
             logActivity('PAYMENT_MADE', `Payment of ₹${paymentData.amount} made`, loanId);
 
             // --- NOTIFY THE LENDER ---
@@ -897,19 +897,23 @@ export const LoanProvider = ({ children }) => {
         }));
     };
 
-    const updateStatsOnPayment = (paymentDate, dueDate) => {
-        const isOnTime = new Date(paymentDate) <= new Date(dueDate);
-        setGamification(prev => ({
-            ...prev,
-            stats: {
-                ...prev.stats,
-                totalPayments: prev.stats.totalPayments + 1,
-                onTimePayments: isOnTime ? prev.stats.onTimePayments + 1 : prev.stats.onTimePayments
-            },
-            points: prev.points + (isOnTime ? 75 : 50)
-            // NOTE: trustScore is managed exclusively by the DB trigger (calculate_payment_trust_delta)
-            // Do NOT increment trustScore here to avoid double-counting
-        }));
+    const updateStatsOnPayment = async (paymentDate, dueDate) => {
+        if (!user) return;
+        // Fetch to ensure we use the backend-calculated trustScore and don't overwrite it
+        const { data: userProfile } = await supabase.from('profiles').select('gamification').eq('id', user.id).single();
+        if (userProfile?.gamification) {
+            const isOnTime = new Date(paymentDate) <= new Date(dueDate);
+            setGamification({
+                ...userProfile.gamification,
+                stats: {
+                    ...userProfile.gamification.stats,
+                    totalPayments: (userProfile.gamification.stats.totalPayments || 0) + 1,
+                    onTimePayments: isOnTime ? (userProfile.gamification.stats.onTimePayments || 0) + 1 : (userProfile.gamification.stats.onTimePayments || 0)
+                },
+                points: (userProfile.gamification.points || 0) + (isOnTime ? 75 : 50)
+                // trustScore correctly stays at the DB trigger value
+            });
+        }
     };
 
     const updateStatsOnLoanComplete = () => {
