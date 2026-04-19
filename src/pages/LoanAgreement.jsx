@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoan } from '../context/LoanContext';
 import SignaturePad from '../components/SignaturePad';
-import RiskScoreDisplay from '../components/RiskScoreDisplay';
 import {
   createAgreement,
   runFraudDetection,
@@ -26,9 +25,8 @@ const STEPS = [
   { id: 1, title: 'Loan Details', icon: '📋', desc: 'Define loan terms' },
   { id: 2, title: 'Borrower Info', icon: '👤', desc: 'Your details (auto-filled)' },
   { id: 3, title: 'Guarantor', icon: '🛡️', desc: 'Guarantor details' },
-  { id: 4, title: 'Risk Check', icon: '🔍', desc: 'AI fraud analysis' },
-  { id: 5, title: 'Sign', icon: '✍️', desc: 'Digital signature' },
-  { id: 6, title: 'Review', icon: '✅', desc: 'Final review' },
+  { id: 4, title: 'Sign', icon: '✍️', desc: 'Digital signature' },
+  { id: 5, title: 'Review', icon: '✅', desc: 'Final review' },
 ];
 
 const LoanAgreement = () => {
@@ -38,9 +36,7 @@ const LoanAgreement = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [agreementId, setAgreementId] = useState(null);
-  const [riskAssessment, setRiskAssessment] = useState(null);
   const [borrowerSignature, setBorrowerSignature] = useState(null);
-  const [isRunningFraud, setIsRunningFraud] = useState(false);
   const [myAgreements, setMyAgreements] = useState([]);
   const [showAgreementsList, setShowAgreementsList] = useState(false);
   const [selectedAgreement, setSelectedAgreement] = useState(null);
@@ -166,9 +162,8 @@ const LoanAgreement = () => {
   const nextStep = async () => {
     if (!validateStep(currentStep)) return;
 
-    // After step 3 (guarantor), create agreement + run fraud check
+    // After step 3 (guarantor), create agreement
     if (currentStep === 3) {
-      setIsRunningFraud(true);
       setCurrentStep(4);
 
       try {
@@ -177,49 +172,24 @@ const LoanAgreement = () => {
         if (!createResult.success) {
           toast.error('Failed to create agreement: ' + createResult.error);
           setCurrentStep(3);
-          setIsRunningFraud(false);
           return;
         }
 
         setAgreementId(createResult.agreement.id);
 
-        // Run fraud detection
-        const fraudResult = await runFraudDetection(
-          {
-            full_name: formData.guarantorName,
-            email: formData.guarantorEmail,
-            phone: formData.guarantorPhone,
-            aadhaar: formData.guarantorAadhaar,
-            address: formData.guarantorAddress,
-          },
-          {
-            borrowerEmail: formData.borrowerEmail,
-          }
-        );
-
-        setRiskAssessment(fraudResult);
-
-        // Save risk assessment
-        await saveRiskAssessment(createResult.agreement.id, fraudResult);
-
         // Update agreement status
         await updateAgreementStatus(createResult.agreement.id, 'pending_borrower_signature');
-
-        setIsRunningFraud(false);
-        toast.success('Fraud analysis complete!');
       } catch (error) {
-        console.error('Error in fraud detection:', error);
-        toast.error('Fraud detection failed');
-        setIsRunningFraud(false);
+        console.error('Error creating agreement:', error);
+        toast.error('Creation failed');
       }
       return;
     }
 
-    setCurrentStep(prev => Math.min(prev + 1, 6));
+    setCurrentStep(prev => Math.min(prev + 1, 5));
   };
 
   const prevStep = () => {
-    if (currentStep === 4 && isRunningFraud) return;
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
@@ -282,7 +252,6 @@ const LoanAgreement = () => {
         guarantorAadhaar: '', guarantorAddress: '',
       }));
       setAgreementId(null);
-      setRiskAssessment(null);
       setBorrowerSignature(null);
     } catch (error) {
       toast.error('Submission failed: ' + error.message);
@@ -575,43 +544,6 @@ const LoanAgreement = () => {
         return (
           <motion.div key="step4" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
             <div className="form-section-ag">
-              <h3 className="section-title-ag">🔍 AI Fraud Detection</h3>
-              {isRunningFraud ? (
-                <div className="fraud-loading">
-                  <div className="fraud-spinner">
-                    <div className="spinner-ring"></div>
-                    <div className="spinner-ring delay-1"></div>
-                    <div className="spinner-ring delay-2"></div>
-                  </div>
-                  <h4>Running AI Fraud Analysis...</h4>
-                  <p>Checking guarantor identity, duplicates, and patterns</p>
-                  <div className="fraud-checks-anim">
-                    {['Checking duplicate guarantors...', 'Validating email patterns...', 'Analyzing phone number...', 'Verifying identity documents...', 'Calculating risk score...'].map((check, i) => (
-                      <motion.div
-                        key={i}
-                        className="fraud-check-item"
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.6 }}
-                      >
-                        <span className="check-dot"></span> {check}
-                      </motion.div>
-                    ))}
-                  </div>
-                </div>
-              ) : riskAssessment ? (
-                <RiskScoreDisplay assessment={riskAssessment} />
-              ) : (
-                <p>Risk assessment will appear here after guarantor details are submitted.</p>
-              )}
-            </div>
-          </motion.div>
-        );
-
-      case 5:
-        return (
-          <motion.div key="step5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-            <div className="form-section-ag">
               <h3 className="section-title-ag">✍️ Digital Consent & Signature</h3>
 
               <div className="consent-box">
@@ -643,9 +575,9 @@ const LoanAgreement = () => {
           </motion.div>
         );
 
-      case 6:
+      case 5:
         return (
-          <motion.div key="step6" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+          <motion.div key="step5" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
             <div className="form-section-ag">
               <h3 className="section-title-ag">✅ Review & Submit</h3>
 
@@ -914,13 +846,12 @@ const LoanAgreement = () => {
               <div className="step-indicator">
                 Step {currentStep} of {STEPS.length}
               </div>
-              {currentStep < 6 ? (
+              {currentStep < 5 ? (
                 <button
                   className="btn-primary"
                   onClick={nextStep}
-                  disabled={isRunningFraud || (currentStep === 4 && isRunningFraud)}
                 >
-                  {currentStep === 3 ? '🔍 Run Fraud Check & Continue' : 'Next →'}
+                  Next →
                 </button>
               ) : (
                 <button

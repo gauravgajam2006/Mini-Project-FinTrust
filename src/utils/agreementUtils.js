@@ -330,7 +330,7 @@ export function generateAgreementPDF(agreementData) {
   y += 10;
 
   const loanTerms = [
-    ['Principal Amount', `₹${Number(agreementData.principal_amount || 0).toLocaleString('en-IN')}`],
+    ['Principal Amount', `Rs. ${Number(agreementData.principal_amount || 0).toLocaleString('en-IN')}`],
     ['Interest Rate', `${agreementData.interest_rate || 0}% per annum`],
     ['Tenure', `${agreementData.tenure_months || 1} month(s)`],
     ['Repayment Schedule', agreementData.repayment_schedule?.replace('_', ' ').toUpperCase() || 'MONTHLY'],
@@ -435,49 +435,7 @@ export function generateAgreementPDF(agreementData) {
 
   y = doc.lastAutoTable.finalY + 15;
 
-  // ---- RISK ASSESSMENT ----
-  if (agreementData.risk_assessment) {
-    if (y > 230) { doc.addPage(); y = 20; }
-    
-    addCenteredText('RISK ASSESSMENT', y, 13, 'bold');
-    y += 10;
 
-    const ra = agreementData.risk_assessment;
-    const riskColor = ra.risk_level === 'LOW' ? [16, 185, 129] :
-                      ra.risk_level === 'MEDIUM' ? [245, 158, 11] : [239, 68, 68];
-
-    autoTable(doc, {
-      startY: y,
-      head: [['Metric', 'Score']],
-      body: [
-        ['Overall Risk Score', `${ra.overall_score}/100`],
-        ['Risk Level', ra.risk_level],
-        ['Guarantor Check', `${ra.guarantor_check_score}/100`],
-        ['Duplicate Check', `${ra.duplicate_check_score}/100`],
-        ['Email Pattern', `${ra.email_pattern_score}/100`],
-        ['Phone Pattern', `${ra.phone_pattern_score}/100`],
-        ['Identity Score', `${ra.identity_score}/100`],
-      ],
-      theme: 'grid',
-      styles: { fontSize: 10, cellPadding: 4 },
-      headStyles: { fillColor: riskColor, textColor: 255, fontStyle: 'bold' },
-      margin: { left: margin, right: margin },
-    });
-
-    y = doc.lastAutoTable.finalY + 10;
-
-    // Flags
-    if (ra.flags && ra.flags.length > 0) {
-      addText('Flags:', margin, y, 10, 'bold');
-      y += 6;
-      ra.flags.forEach(flag => {
-        const icon = flag.severity === 'HIGH' ? '⚠️' : flag.severity === 'MEDIUM' ? '⚡' : 'ℹ️';
-        addText(`${icon} [${flag.severity}] ${flag.message}`, margin + 5, y, 9);
-        y += 5;
-      });
-    }
-    y += 10;
-  }
 
   // ---- SIGNATURES SECTION ----
   if (y > 200) { doc.addPage(); y = 20; }
