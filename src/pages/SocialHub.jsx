@@ -199,138 +199,151 @@ const SocialHub = () => {
                 <p>Connect with trusted friends and family to manage informal loans</p>
             </div>
 
-            <div className="social-grid">
-                <div className="social-left">
-                    <div className="social-card">
-                        <h3>🔍 Find Contacts</h3>
-                        <p className="subtext">Search by exact Email or Phone Number</p>
+            <div className="social-grid-wrapper" style={{ position: 'relative' }}>
+                <div className="development-overlay">
+                    <div className="development-badge">
+                        <span>🚧</span>
+                        UNDER DEVELOPMENT
+                        <span>🚧</span>
+                    </div>
+                    <p style={{ marginTop: '20px', color: 'var(--color-text-dark)', fontWeight: '600' }}>
+                        This feature is coming soon to your trusted network.
+                    </p>
+                </div>
 
-                        <form onSubmit={handleSearch} className="search-form">
-                            <input
-                                type="text"
-                                placeholder="Enter email or +91 phone..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="search-input"
-                            />
-                            <button type="submit" className="btn-primary" disabled={loading}>
-                                {loading ? 'Searching...' : 'Search'}
-                            </button>
-                        </form>
+                <div className="social-grid disabled">
+                    <div className="social-left">
+                        <div className="social-card">
+                            <h3>🔍 Find Contacts</h3>
+                            <p className="subtext">Search by exact Email or Phone Number</p>
 
-                        <div className="contacts-import-section" style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
-                            <h4 style={{ marginBottom: '12px', fontSize: '14px', color: 'var(--color-text-medium)' }}>Other ways to connect</h4>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                <button onClick={importFromContacts} className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                                    📱 Import from Phone Contacts
+                            <form onSubmit={handleSearch} className="search-form">
+                                <input
+                                    type="text"
+                                    placeholder="Enter email or +91 phone..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="search-input"
+                                />
+                                <button type="submit" className="btn-primary" disabled={loading}>
+                                    {loading ? 'Searching...' : 'Search'}
                                 </button>
-                                <button onClick={() => setShowManualForm(!showManualForm)} className="btn-outline" style={{ width: '100%' }}>
-                                    ✍️ Add Contact Manually
-                                </button>
+                            </form>
+
+                            <div className="contacts-import-section" style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--color-border)' }}>
+                                <h4 style={{ marginBottom: '12px', fontSize: '14px', color: 'var(--color-text-medium)' }}>Other ways to connect</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                    <button onClick={importFromContacts} className="btn-secondary" style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                                        📱 Import from Phone Contacts
+                                    </button>
+                                    <button onClick={() => setShowManualForm(!showManualForm)} className="btn-outline" style={{ width: '100%' }}>
+                                        ✍️ Add Contact Manually
+                                    </button>
+                                </div>
+
+                                {showManualForm && (
+                                    <form onSubmit={handleManualAdd} className="manual-add-form" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--color-surface-hover)', padding: '16px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
+                                        <input type="text" placeholder="Contact Name" value={manualName} onChange={e => setManualName(e.target.value)} required className="form-input" style={{ width: '100%', boxSizing: 'border-box' }} />
+                                        <input type="text" placeholder="Phone Number or Email" value={manualPhone} onChange={e => setManualPhone(e.target.value)} required className="form-input" style={{ width: '100%', boxSizing: 'border-box' }} />
+                                        <button type="submit" className="btn-primary" style={{ width: '100%' }}>Add to Network</button>
+                                    </form>
+                                )}
                             </div>
 
-                            {showManualForm && (
-                                <form onSubmit={handleManualAdd} className="manual-add-form" style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px', background: 'var(--color-surface-hover)', padding: '16px', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                                    <input type="text" placeholder="Contact Name" value={manualName} onChange={e => setManualName(e.target.value)} required className="form-input" style={{ width: '100%', boxSizing: 'border-box' }} />
-                                    <input type="text" placeholder="Phone Number or Email" value={manualPhone} onChange={e => setManualPhone(e.target.value)} required className="form-input" style={{ width: '100%', boxSizing: 'border-box' }} />
-                                    <button type="submit" className="btn-primary" style={{ width: '100%' }}>Add to Network</button>
-                                </form>
+                            {searchResults.length > 0 && (
+                                <div className="search-results">
+                                    <h4>Search Results</h4>
+                                    {searchResults.map(result => (
+                                        <div key={result.id} className="user-list-item">
+                                            <div className="user-info">
+                                                <div className="user-avatar">
+                                                    {result.avatar_url ? (
+                                                        <img src={result.avatar_url} alt={result.name} className="avatar-img" />
+                                                    ) : (
+                                                        result.name?.charAt(0) || 'U'
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="user-name">{result.name}</div>
+                                                    <div className="user-email">{result.email}</div>
+                                                </div>
+                                            </div>
+                                            <button
+                                                className="btn-secondary btn-small"
+                                                onClick={() => sendFriendRequest(result)}
+                                            >
+                                                Add Friend
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
 
-                        {searchResults.length > 0 && (
-                            <div className="search-results">
-                                <h4>Search Results</h4>
-                                {searchResults.map(result => (
-                                    <div key={result.id} className="user-list-item">
-                                        <div className="user-info">
-                                            <div className="user-avatar">
-                                                {result.avatar_url ? (
-                                                    <img src={result.avatar_url} alt={result.name} className="avatar-img" />
-                                                ) : (
-                                                    result.name?.charAt(0) || 'U'
-                                                )}
+                        {pendingRequests.length > 0 && (
+                            <div className="social-card highlight-card">
+                                <h3>👋 Pending Requests</h3>
+                                <div className="requests-list">
+                                    {pendingRequests.map(req => (
+                                        <div key={req.id} className="user-list-item">
+                                            <div className="user-info">
+                                                <div className="user-avatar">{req.sender_name?.charAt(0) || 'U'}</div>
+                                                <div>
+                                                    <div className="user-name">{req.sender_name}</div>
+                                                    <div className="user-subtext">Wants to connect</div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <div className="user-name">{result.name}</div>
-                                                <div className="user-email">{result.email}</div>
+                                            <div className="request-actions">
+                                                <button onClick={() => handleRequest(req.id, true)} className="btn-accept">✓</button>
+                                                <button onClick={() => handleRequest(req.id, false)} className="btn-decline">✕</button>
                                             </div>
                                         </div>
-                                        <button
-                                            className="btn-secondary btn-small"
-                                            onClick={() => sendFriendRequest(result)}
-                                        >
-                                            Add Friend
-                                        </button>
-                                    </div>
-                                ))}
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
 
-                    {pendingRequests.length > 0 && (
-                        <div className="social-card highlight-card">
-                            <h3>👋 Pending Requests</h3>
-                            <div className="requests-list">
-                                {pendingRequests.map(req => (
-                                    <div key={req.id} className="user-list-item">
-                                        <div className="user-info">
-                                            <div className="user-avatar">{req.sender_name?.charAt(0) || 'U'}</div>
-                                            <div>
-                                                <div className="user-name">{req.sender_name}</div>
-                                                <div className="user-subtext">Wants to connect</div>
-                                            </div>
-                                        </div>
-                                        <div className="request-actions">
-                                            <button onClick={() => handleRequest(req.id, true)} className="btn-accept">✓</button>
-                                            <button onClick={() => handleRequest(req.id, false)} className="btn-decline">✕</button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
+                    <div className="social-right">
+                        <div className="social-card">
+                            <h3>🤝 My Trusted Network ({friends.length})</h3>
+                            <p className="subtext">People you can transact with</p>
 
-                <div className="social-right">
-                    <div className="social-card">
-                        <h3>🤝 My Trusted Network ({friends.length})</h3>
-                        <p className="subtext">People you can transact with</p>
-
-                        {friends.length === 0 ? (
-                            <div className="empty-state">
-                                <span className="empty-icon">📭</span>
-                                <p>Your network is empty.</p>
-                                <p className="empty-subtext">Search for friends and family to start adding them to your trusted circle.</p>
-                            </div>
-                        ) : (
-                            <div className="friends-list">
-                                {friends.map(conn => (
-                                    <div key={conn.id} className="friend-card">
-                                        <div className="friend-header">
-                                            <div className="user-info">
-                                                <div className="user-avatar">{conn.friend.name?.charAt(0) || 'U'}</div>
-                                                <div>
-                                                    <div className="user-name">{conn.friend.name}</div>
-                                                    <div className="user-email">{conn.friend.email}</div>
+                            {friends.length === 0 ? (
+                                <div className="empty-state">
+                                    <span className="empty-icon">📭</span>
+                                    <p>Your network is empty.</p>
+                                    <p className="empty-subtext">Search for friends and family to start adding them to your trusted circle.</p>
+                                </div>
+                            ) : (
+                                <div className="friends-list">
+                                    {friends.map(conn => (
+                                        <div key={conn.id} className="friend-card">
+                                            <div className="friend-header">
+                                                <div className="user-info">
+                                                    <div className="user-avatar">{conn.friend.name?.charAt(0) || 'U'}</div>
+                                                    <div>
+                                                        <div className="user-name">{conn.friend.name}</div>
+                                                        <div className="user-email">{conn.friend.email}</div>
+                                                    </div>
                                                 </div>
+                                                <div className="trust-badge">Verified Contact</div>
                                             </div>
-                                            <div className="trust-badge">Verified Contact</div>
+                                            <div className="friend-actions">
+                                                <button className="btn-secondary btn-small">Create Loan</button>
+                                                <button
+                                                    className="btn-outline btn-small"
+                                                    onClick={() => sendVouch(conn.friend.id)}
+                                                    title="Endorse this person's trustworthiness"
+                                                >
+                                                    Vouch for them
+                                                </button>
+                                            </div>
                                         </div>
-                                        <div className="friend-actions">
-                                            <button className="btn-secondary btn-small">Create Loan</button>
-                                            <button
-                                                className="btn-outline btn-small"
-                                                onClick={() => sendVouch(conn.friend.id)}
-                                                title="Endorse this person's trustworthiness"
-                                            >
-                                                Vouch for them
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

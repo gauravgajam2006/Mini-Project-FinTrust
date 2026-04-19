@@ -265,3 +265,52 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+/* Development Status Styles */
+.social-hub {
+    position: relative;
+}
+
+.social-grid.disabled {
+    filter: blur(1px) grayscale(0.5);
+    opacity: 0.6;
+    pointer-events: none;
+    user-select: none;
+}
+
+.development-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(2px);
+    border-radius: 20px;
+}
+
+.development-badge {
+    background: #0F172A;
+    color: #F8FAFC;
+    padding: 16px 32px;
+    border-radius: 100px;
+    font-weight: 900;
+    font-size: 24px;
+    letter-spacing: 2px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+    border: 3px solid #EF4444;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    animation: bounce 2s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
