@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { validatePayment, formatCurrency } from '../utils/loanValidation';
+import MockPayment from './MockPayment';
 import './AddPayment.css';
 
 const AddPayment = ({ loanId, outstandingAmount, onPaymentAdded, onCancel }) => {
@@ -12,6 +13,7 @@ const AddPayment = ({ loanId, outstandingAmount, onPaymentAdded, onCancel }) => 
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showGateway, setShowGateway] = useState(false);
 
     const paymentMethods = ['Bank Transfer', 'UPI', 'Check', 'Other'];
 
@@ -25,26 +27,39 @@ const AddPayment = ({ loanId, outstandingAmount, onPaymentAdded, onCancel }) => 
         }
     };
 
-    const handleSubmit = async (e) => {
+    const handleSubmit = (e) => {
         e.preventDefault();
 
-        const generatedTxnId = window.crypto?.randomUUID?.() || `txn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const amount = parseFloat(formData.amount);
 
-        const paymentData = {
+        if (!amount || amount <= 0) {
+            setErrors({ amount: "Enter a valid amount" });
+            return;
+        }
+
+        const validation = validatePayment({
             ...formData,
-            amount: parseFloat(formData.amount),
-            transactionId: generatedTxnId
-        };
-
-        // Validate
-        const validation = validatePayment(paymentData, outstandingAmount);
+            amount
+        }, outstandingAmount);
 
         if (!validation.isValid) {
             setErrors(validation.errors);
             return;
         }
 
+        // 🚀 OPEN FAKE PAYMENT GATEWAY
+        setShowGateway(true);
+    };
+
+    const handlePaymentSuccess = async (paymentResult) => {
+        setShowGateway(false);
         setIsSubmitting(true);
+
+        const paymentData = {
+            ...formData,
+            amount: parseFloat(formData.amount) || 0,
+            transactionId: paymentResult.transactionId
+        };
 
         try {
             await onPaymentAdded(paymentData);
@@ -133,11 +148,20 @@ const AddPayment = ({ loanId, outstandingAmount, onPaymentAdded, onCancel }) => 
                     <button type="button" className="btn-secondary" onClick={onCancel}>
                         Cancel
                     </button>
-                    <button type="submit" className="btn-primary" disabled={isSubmitting}>
+                    <button type="submit" className="btn-primary" disabled={isSubmitting || showGateway}>
                         {isSubmitting ? 'Adding...' : '✓ Add Payment'}
                     </button>
                 </div>
             </form>
+
+            {showGateway && (
+                <MockPayment
+                    loan={{ id: loanId }}
+                    amount={parseFloat(formData.amount) || 0}
+                    onSuccess={handlePaymentSuccess}
+                    onCancel={() => setShowGateway(false)}
+                />
+            )}
         </div>
     );
 };
