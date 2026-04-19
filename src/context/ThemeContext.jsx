@@ -14,7 +14,11 @@ export const ThemeProvider = ({ children }) => {
     }, [theme]);
 
     const toggleTheme = () => {
+        document.documentElement.classList.add('theme-changing');
         setTheme(prevTheme => prevTheme === 'day' ? 'night' : 'day');
+        setTimeout(() => {
+            document.documentElement.classList.remove('theme-changing');
+        }, 300);
     };
 
     return (

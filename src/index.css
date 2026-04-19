@@ -115,8 +115,24 @@ body {
   background-color: var(--color-background);
   line-height: 1.6;
   overflow-x: hidden;
-  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
+
+html, body {
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+* {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease;
+}
+
+/* Premium effect for theme transitions */
+.theme-changing,
+.theme-changing *,
+.theme-changing *::before,
+.theme-changing *::after {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease, opacity 300ms ease !important;
+}
+
 
 h1,
 h2,
