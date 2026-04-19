@@ -14,32 +14,15 @@ export const ThemeProvider = ({ children }) => {
     }, [theme]);
 
     const toggleTheme = () => {
-        const overlay = document.getElementById("theme-transition-overlay");
-        
-        if (overlay) {
-            // Step 1: Show overlay (blur in)
-            overlay.style.opacity = "1";
-            overlay.style.transform = "scale(1.02)";
-            
-            // Step 2: Switch theme behind overlay
-            setTimeout(() => {
-                setTheme(prevTheme => prevTheme === 'day' ? 'night' : 'day');
-            }, 150);
-            
-            // Step 3: Fade overlay out
-            setTimeout(() => {
-                overlay.style.opacity = "0";
-                overlay.style.transform = "scale(1)";
-            }, 350);
-        } else {
-            // Fallback
-            setTheme(prevTheme => prevTheme === 'day' ? 'night' : 'day');
-        }
+        document.documentElement.classList.add('theme-changing');
+        setTheme(prevTheme => prevTheme === 'day' ? 'night' : 'day');
+        setTimeout(() => {
+            document.documentElement.classList.remove('theme-changing');
+        }, 300);
     };
 
     return (
         <ThemeContext.Provider value={{ theme, toggleTheme }}>
-            <div id="theme-transition-overlay"></div>
             {children}
         </ThemeContext.Provider>
     );

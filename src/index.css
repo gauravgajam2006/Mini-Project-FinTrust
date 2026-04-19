@@ -126,21 +126,11 @@ html, body {
 }
 
 /* Premium effect for theme transitions */
-#theme-transition-overlay {
-  position: fixed;
-  inset: 0;
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  background: rgba(255, 255, 255, 0.08); /* Light overlay for day mode */
-  opacity: 0;
-  transform: scale(1.02);
-  pointer-events: none;
-  transition: opacity 300ms ease, transform 300ms ease;
-  z-index: 9999;
-}
-
-[data-theme="night"] #theme-transition-overlay {
-  background: rgba(0, 0, 0, 0.25); /* Darker overlay for night mode */
+.theme-changing,
+.theme-changing *,
+.theme-changing *::before,
+.theme-changing *::after {
+  transition: background-color 300ms ease, color 300ms ease, border-color 300ms ease, opacity 300ms ease !important;
 }
 
 
