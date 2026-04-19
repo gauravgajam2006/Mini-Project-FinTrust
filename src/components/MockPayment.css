@@ -21,7 +21,7 @@
     border-radius: 16px;
     width: 90%;
     max-width: 800px;
-    min-height: 520px;
+    height: auto; /* Shrink to fit content */
     display: flex;
     box-shadow: var(--shadow-xl);
     border: 1px solid var(--color-border);
