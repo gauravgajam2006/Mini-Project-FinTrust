@@ -60,30 +60,7 @@ const GamificationDashboard = () => {
                     </div>
                 </div>
 
-                {/* Trust Score Card */}
-                <div className="gam-card trust-card">
-                    <div className="card-header">
-                        <div className="card-icon" style={{ background: getTrustScoreColor(gamification.trustScore) }}>
-                            ⭐
-                        </div>
-                        <div>
-                            <h3>Trust Score</h3>
-                            <p className="card-subtitle">{getTrustScoreLabel(gamification.trustScore)}</p>
-                        </div>
-                    </div>
-                    <div className="trust-score-display">
-                        <div className="score-value">{Number(gamification.trustScore || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                        <div className="score-meter">
-                            <div
-                                className="score-fill"
-                                style={{
-                                    width: `${gamification.trustScore}%`,
-                                    background: getTrustScoreColor(gamification.trustScore)
-                                }}
-                            />
-                        </div>
-                    </div>
-                </div>
+                {/* Trust Score Card removed */}
 
 
 

@@ -22,13 +22,7 @@ const GamificationWidget = () => {
                     <div className="level-points">{gamification.points} pts</div>
                 </div>
             </div>
-            <div className="widget-stats">
-
-                <div className="widget-stat">
-                    <span className="stat-icon">⭐</span>
-                    <span className="stat-value">{Number(gamification.trustScore || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</span>
-                </div>
-            </div>
+            {/* Trust score removed as requested */}
             <div className="widget-progress">
                 <div className="progress-bar">
                     <div

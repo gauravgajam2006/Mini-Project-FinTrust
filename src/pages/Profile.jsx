@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLoan } from '../context/LoanContext';
 import GamificationWidget from '../components/GamificationWidget';
-import TrustScoreCard from '../components/TrustScoreCard';
 import './Profile.css';
 
 const Profile = () => {
@@ -61,11 +60,11 @@ const Profile = () => {
     <div className="profile-page fade-in">
       <div className="profile-header">
         <h1>👤 My Profile</h1>
-        <p>Manage your account, view your Trust Score and achievements</p>
+        <p>Manage your account, view your achievements and lending statistics</p>
       </div>
 
       <div className="profile-grid">
-        {/* Left Column - User Info & Trust Score */}
+        {/* Left Column - User Info & Gamification */}
         <div className="profile-info-column">
           <div className="profile-card user-card neon-border">
             <div className="user-avatar-large">
@@ -97,9 +96,8 @@ const Profile = () => {
           <div className="profile-card gamification-wrapper">
             <GamificationWidget />
           </div>
-
-          <TrustScoreCard score={gamificationData?.trustScore || 50} />
         </div>
+
 
         {/* Right Column - Stats & Badges */}
         <div className="profile-stats-column">
