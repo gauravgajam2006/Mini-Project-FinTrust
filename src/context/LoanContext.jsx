@@ -72,7 +72,7 @@ export const LoanProvider = ({ children }) => {
                 name: profile?.name || supabaseUser.user_metadata?.name || supabaseUser.email.split('@')[0],
                 avatar_url: profile?.avatar_url || supabaseUser.user_metadata?.avatar_url || '',
                 phone: profile?.phone || '',
-                aadhaar: profile?.aadhaar || '',
+                aadhaar: profile?.aadhaar ? `XXXX-XXXX-${profile.aadhaar.slice(-4)}` : '',
                 ...supabaseUser
             });
 
@@ -102,12 +102,12 @@ export const LoanProvider = ({ children }) => {
     };
 
     // Helper function to map database fields to app format
-    const mapLoanFromDB = (dbLoan) => {
+    const mapLoanFromDB = (dbLoan, currentUser) => {
         let computedType = dbLoan.type;
-        if (user?.email) {
-            if (dbLoan.borrower_email?.toLowerCase() === user.email.toLowerCase()) {
+        if (currentUser?.email) {
+            if (dbLoan.borrower_email?.toLowerCase() === currentUser.email.toLowerCase()) {
                 computedType = 'borrowed';
-            } else if (dbLoan.lender_email?.toLowerCase() === user.email.toLowerCase()) {
+            } else if (dbLoan.lender_email?.toLowerCase() === currentUser.email.toLowerCase()) {
                 computedType = 'lent';
             }
         }
@@ -172,12 +172,12 @@ export const LoanProvider = ({ children }) => {
             const { data, error } = await supabase
                 .from('loans')
                 .select('*, payments(*)')
-                .or(`user_id.eq.${user?.id},borrower_email.ilike.%${user?.email}%,lender_email.ilike.%${user?.email}%`)
+                .or(`user_id.eq.${user?.id},borrower_email.eq.${user?.email},lender_email.eq.${user?.email}`)
                 .order('created_at', { ascending: false });
 
             if (error) throw error;
 
-            const loadedLoans = data.map(mapLoanFromDB);
+            const loadedLoans = data.map(l => mapLoanFromDB(l, user));
             setLoans(loadedLoans);
             checkDueDates(loadedLoans);
         } catch (error) {
@@ -451,7 +451,7 @@ export const LoanProvider = ({ children }) => {
             setNotifications([]);
             setUnreadNotificationCount(0);
         }
-    }, [user]);
+    }, [user?.id]);
 
     // CREATE LOAN
     const createLoan = async (loanData) => {
@@ -516,7 +516,7 @@ export const LoanProvider = ({ children }) => {
 
             if (error) throw error;
 
-            const mappedLoan = mapLoanFromDB(data);
+            const mappedLoan = mapLoanFromDB(data, user);
             setLoans(prev => [mappedLoan, ...prev]);
 
             logActivity('LOAN_CREATED', `Created ${loanData.type} loan for ₹${loanData.amount}`, data.id);
@@ -607,7 +607,8 @@ export const LoanProvider = ({ children }) => {
             
             if (!data || data.length === 0) {
                 // Supabase RLS silently blocked the deletion (0 rows deleted)
-                throw new Error("Permission denied: You can only delete loans you created.");
+                toast.error("You can only delete loans you created.");
+                return { success: false, error: "You can only delete loans you created." };
             }
             
             setLoans(prev => prev.filter(loan => loan.id !== loanId));
@@ -755,18 +756,11 @@ export const LoanProvider = ({ children }) => {
                 .single();
 
             if (!loanFetchErr && freshLoan) {
-                const mappedLoan = mapLoanFromDB(freshLoan);
+                const mappedLoan = mapLoanFromDB(freshLoan, user);
                 setLoans(prev => prev.map(l => l.id === loanId ? mappedLoan : l));
-            } else {
-                // Fallback: optimistic local update
-                const loan = loans.find(l => l.id === loanId);
-                const updatedAmountPaid = (loan?.amountPaid || 0) + parseFloat(paymentData.amount);
-                setLoans(prev => prev.map(l => l.id === loanId ? {
-                    ...l,
-                    payments: [data, ...(l.payments || [])],
-                    amountPaid: updatedAmountPaid
-                } : l));
             }
+
+            await updateLoanStatus(loanId);
 
             const loan = loans.find(l => l.id === loanId);
             updateStatsOnPayment(paymentData.date, loan?.dueDate);

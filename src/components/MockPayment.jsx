@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './MockPayment.css';
 
 const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
@@ -6,7 +6,15 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
     const [selectedMethod, setSelectedMethod] = useState('upi');
     const [upiId, setUpiId] = useState('');
     const [isProcessing, setIsProcessing] = useState(false); // Prevents duplicate payment triggers
+    const [transactionId, setTransactionId] = useState('');
+    const [retryCount, setRetryCount] = useState(0);
     const processingRef = useRef(false);
+
+    useEffect(() => {
+        return () => {
+            processingRef.current = false;
+        };
+    }, []);
 
     const paymentMethods = [
         { id: 'upi', name: 'UPI', icon: '📱', description: 'Pay via UPI apps' },
@@ -29,6 +37,8 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
         processingRef.current = true;
         setIsProcessing(true);
         setStep('processing');
+        const generatedTxnId = window.crypto?.randomUUID?.() || `txn_${Date.now()}`;
+        setTransactionId(generatedTxnId);
 
         // Simulate payment processing (2 seconds)
         setTimeout(() => {
@@ -41,7 +51,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                 // Generate mock payment data with unique transaction_id
                 const paymentData = {
                     paymentId: `PAY${Date.now()}`,
-                    transactionId: window.crypto?.randomUUID?.() || `txn_${Date.now()}`,
+                    transactionId: generatedTxnId,
                     amount: amount,
                     method: selectedMethod === 'upi' ? `UPI (${upiId || 'success@upi'})` : selectedMethod,
                     timestamp: new Date().toISOString(),
@@ -58,13 +68,14 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                 }, 1500);
             } else {
                 setStep('failed');
+                setRetryCount(prev => prev + 1);
                 processingRef.current = false;
                 setIsProcessing(false); // Allow retry on failure
             }
         }, 2000);
     };
 
-    const isValidUpi = /^[\w.-]+@[\w]+$/.test(upiId);
+    const isValidUpi = /^[a-zA-Z0-9._-]+@[a-zA-Z]{3,}$/.test(upiId);
 
     return (
         <div className="mock-payment-overlay">
@@ -72,7 +83,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                 {/* Header */}
                 <div className="payment-header">
                     <h2>💎 FINTRUST Payment</h2>
-                    <button className="payment-close" onClick={onCancel}>✕</button>
+                    <button className="payment-close" onClick={onCancel} disabled={isProcessing}>✕</button>
                 </div>
 
                 {/* Amount Display */}
@@ -205,7 +216,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                             </div>
                             <div className="detail-row">
                                 <span>Transaction ID:</span>
-                                <span>TXN{Math.random().toString(36).substr(2, 9).toUpperCase()}</span>
+                                <span>{transactionId}</span>
                             </div>
                             <div className="detail-row">
                                 <span>Date & Time:</span>
@@ -222,10 +233,14 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
                         <h3>Payment Failed</h3>
                         <p>Unable to process your payment. Please try again.</p>
                         <div className="failed-actions">
-                            <button className="btn-retry" onClick={() => { setStep('methods'); setIsProcessing(false); processingRef.current = false; }}>
-                                Try Again
+                            <button 
+                                className="btn-retry" 
+                                onClick={() => { setStep('methods'); setIsProcessing(false); processingRef.current = false; }}
+                                disabled={retryCount >= 3}
+                            >
+                                {retryCount >= 3 ? 'Max retries reached' : 'Try Again'}
                             </button>
-                            <button className="btn-cancel-failed" onClick={onCancel}>
+                            <button className="btn-cancel-failed" onClick={onCancel} disabled={isProcessing}>
                                 Cancel
                             </button>
                         </div>
