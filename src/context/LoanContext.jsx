@@ -180,6 +180,14 @@ export const LoanProvider = ({ children }) => {
             const loadedLoans = data.map(l => mapLoanFromDB(l, user));
             setLoans(loadedLoans);
             checkDueDates(loadedLoans);
+            
+            // Auto-fix old loans
+            loadedLoans.forEach(loan => {
+                // Ensure we don't accidentally auto-complete/activate a pending/rejected loan unless it has payments
+                if (loan.status !== 'pending_approval' && loan.status !== 'rejected') {
+                    updateLoanStatus(loan.id, loan);
+                }
+            });
         } catch (error) {
             console.error('Error fetching loans:', error.message);
             toast.error(error.message);
@@ -814,20 +822,26 @@ export const LoanProvider = ({ children }) => {
         const loan = manualLoanData || loans.find(l => l?.id === loanId);
         if (!loan) return { success: false };
 
-        let newStatus = loan?.status;
         const amount = parseFloat(loan?.amount) || 0;
         const amountPaid = parseFloat(loan?.amountPaid) || 0;
-        const outstanding = amount - amountPaid;
+        const remaining = amount - amountPaid;
+        
+        let newStatus = loan?.status;
+
+        // Do not update status if it's pending approval or rejected, unless fully paid
+        if ((newStatus === 'pending_approval' || newStatus === 'rejected') && remaining > 0) {
+            return { success: true, status: newStatus };
+        }
         
         const today = new Date();
         const dueDate = new Date(loan?.dueDate);
 
         // Robust completion check
-        if (outstanding <= 0.01) { // Handle small float precision issues
+        if (remaining <= 0) {
             newStatus = 'completed';
-        } else if (dueDate < today && newStatus !== 'completed') {
+        } else if (dueDate < today && remaining > 0) {
             newStatus = 'overdue';
-        } else if (newStatus !== 'completed') {
+        } else {
             newStatus = 'active';
         }
 

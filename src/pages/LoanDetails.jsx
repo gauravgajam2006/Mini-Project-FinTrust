@@ -17,6 +17,10 @@ const LoanDetails = () => {
     // Reactively compute loan data from context state
     const loan = getLoanDetails(id);
     const outstandingAmount = calculateOutstandingAmount(id);
+    
+    // Always derive completion and remaining exactly
+    const remaining = loan ? loan.amount - loan.amountPaid : 0;
+    const isCompleted = loan ? remaining <= 0 : false;
 
     useEffect(() => {
         if (!loan && !showDeleteModal) {
@@ -108,8 +112,22 @@ const LoanDetails = () => {
             </div>
 
             <div className="details-grid">
+                {/* Completed State UI */}
+                {isCompleted && (
+                    <div className="payment-section-full">
+                        <div className="outstanding-card" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+                            <div className="outstanding-header">
+                                <h3 style={{ color: '#10B981' }}>🎉 Loan Successfully Repaid</h3>
+                                <div className="outstanding-breakdown" style={{ marginTop: '0.5rem' }}>
+                                    <span>You have fully repaid this loan.</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* Payment Section - Shows for active/overdue loans with outstanding balance */}
-                {(loan.status === 'active' || loan.status === 'overdue') && outstandingAmount > 0 && (
+                {!isCompleted && outstandingAmount > 0 && (loan.status === 'active' || loan.status === 'overdue' || loan.status === 'pending_approval') && (
                     <div className="payment-section-full">
                         {!showPaymentForm ? (
                             <div className="outstanding-card">
@@ -204,7 +222,7 @@ const LoanDetails = () => {
                         </div>
                     )}
 
-                    {loan.status === 'active' && isBorrower && outstandingAmount > 0 && (
+                    {!isCompleted && isBorrower && remaining > 0 && (loan.status === 'active' || loan.status === 'overdue') && (
                         <div className="finalize-loan-box">
                             <h4>Finalize Loan</h4>
                             <p>To finalize this loan, please add a formal payment record for the remaining balance.</p>
