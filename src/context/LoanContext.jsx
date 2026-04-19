@@ -161,7 +161,7 @@ export const LoanProvider = ({ children }) => {
         const loan = loans.find(l => l?.id === loanId);
         if (!loan) return 0;
         const outstanding = (loan?.amount || 0) - (loan?.amountPaid || 0);
-        return outstanding < 0.01 ? 0 : outstanding;
+        return outstanding < 1 ? 0 : outstanding;
     };
 
     // FETCH LOANS
@@ -838,9 +838,9 @@ export const LoanProvider = ({ children }) => {
         const dueDate = new Date(loan?.dueDate);
 
         // Robust completion check
-        if (remaining <= 0.01) {
+        if (remaining < 1) {
             newStatus = 'completed';
-        } else if (dueDate < today && remaining > 0.01) {
+        } else if (dueDate < today && remaining >= 1) {
             newStatus = 'overdue';
         } else {
             newStatus = 'active';

@@ -20,7 +20,7 @@ const LoanDetails = () => {
     
     // Always derive completion and remaining exactly
     const remaining = loan ? Math.max(0, loan.amount - loan.amountPaid) : 0;
-    const isCompleted = loan ? remaining < 0.01 : false;
+    const isCompleted = loan ? remaining < 1 : false;
 
     useEffect(() => {
         if (!loan && !showDeleteModal) {
@@ -222,7 +222,7 @@ const LoanDetails = () => {
                         </div>
                     )}
 
-                    {!isCompleted && isBorrower && remaining > 0 && (loan.status === 'active' || loan.status === 'overdue') && (
+                    {!isCompleted && isBorrower && remaining >= 1 && (loan.status === 'active' || loan.status === 'overdue') && (
                         <div className="finalize-loan-box">
                             <h4>Finalize Loan</h4>
                             <p>To finalize this loan, please add a formal payment record for the remaining balance.</p>
