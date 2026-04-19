@@ -906,8 +906,9 @@ export const LoanProvider = ({ children }) => {
                 totalPayments: prev.stats.totalPayments + 1,
                 onTimePayments: isOnTime ? prev.stats.onTimePayments + 1 : prev.stats.onTimePayments
             },
-            points: prev.points + (isOnTime ? 75 : 50),
-            trustScore: isOnTime ? prev.trustScore + 10 : prev.trustScore
+            points: prev.points + (isOnTime ? 75 : 50)
+            // NOTE: trustScore is managed exclusively by the DB trigger (calculate_payment_trust_delta)
+            // Do NOT increment trustScore here to avoid double-counting
         }));
     };
 
