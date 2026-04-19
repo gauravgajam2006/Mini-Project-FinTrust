@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoan } from '../context/LoanContext';
 import SignaturePad from '../components/SignaturePad';
@@ -13,9 +13,9 @@ import {
   fetchMyAgreements,
   fetchAgreementDetails,
   generateAgreementPDF,
-  getDocumentSignedURL,
   updateAgreement,
 } from '../utils/agreementUtils';
+import RiskScoreDisplay from '../components/RiskScoreDisplay';
 import toast from 'react-hot-toast';
 import './LoanAgreement.css';
 
@@ -31,7 +31,6 @@ const STEPS = [
 ];
 
 const LoanAgreement = () => {
-  const navigate = useNavigate();
   const { user } = useLoan();
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -44,6 +43,7 @@ const LoanAgreement = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [lenderSigningId, setLenderSigningId] = useState(null);
   const [lenderSignature, setLenderSignature] = useState(null);
+  const [riskAssessment, setRiskAssessment] = useState(null);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -191,6 +191,21 @@ const LoanAgreement = () => {
 
         // Update agreement status
         await updateAgreementStatus(targetAgId, 'pending_borrower_signature');
+
+        // Run Fraud Detection
+        const guarantorData = {
+          full_name: formData.guarantorName,
+          email: formData.guarantorEmail,
+          phone: formData.guarantorPhone,
+          aadhaar: formData.guarantorAadhaar,
+          address: formData.guarantorAddress
+        };
+        const assessment = await runFraudDetection(guarantorData, formData);
+        setRiskAssessment(assessment);
+        
+        // Save Risk Assessment to DB
+        await saveRiskAssessment(targetAgId, assessment);
+
       } catch (error) {
         console.error('Error saving agreement:', error);
         toast.error('Save failed');
@@ -350,7 +365,7 @@ const LoanAgreement = () => {
       pdfDoc.save(`FinTrust_Agreement_${agId.slice(0, 8).toUpperCase()}.pdf`);
       toast.dismiss('dl-pdf');
       toast.success('PDF downloaded!');
-    } catch (error) {
+    } catch {
       toast.dismiss('dl-pdf');
       toast.error('PDF generation failed');
     }
@@ -859,7 +874,20 @@ const LoanAgreement = () => {
                       
                       {/* Lender approve/reject buttons */}
                       {ag.status === 'pending_lender_review' && isLenderForAgreement(ag) && (
-                        </>
+                        <div className="lender-actions-quick">
+                          <button 
+                            className="ag-btn ag-btn-approve" 
+                            onClick={(e) => { e.stopPropagation(); initLenderApprove(ag.id); }}
+                          >
+                            ✅ Approve
+                          </button>
+                          <button 
+                            className="ag-btn ag-btn-reject" 
+                            onClick={(e) => { e.stopPropagation(); handleLenderReject(ag.id); }}
+                          >
+                            ❌ Reject
+                          </button>
+                        </div>
                       )}
 
                       {/* Edit button for pending agreements (only for borrower) */}
