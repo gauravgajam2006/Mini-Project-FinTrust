@@ -23,7 +23,7 @@ export const LoanProvider = ({ children }) => {
         level: 1,
         badges: [],
         streak: 0,
-        trustScore: 500,
+        trustScore: 50, // Must match profiles.trust_score DB default (0-100 scale)
         stats: {
             totalLoans: 0,
             completedLoans: 0,
@@ -77,7 +77,14 @@ export const LoanProvider = ({ children }) => {
             });
 
             if (profile?.gamification) {
-                setGamification(profile.gamification);
+                // CRITICAL FIX: Override gamification.trustScore with the authoritative
+                // profiles.trust_score from the DB. The gamification JSON's trustScore
+                // field can become stale — the DB trigger only updates profiles.trust_score.
+                const dbTrustScore = profile.trust_score ?? 50;
+                setGamification({
+                    ...profile.gamification,
+                    trustScore: dbTrustScore
+                });
             }
             
             setIsAuthenticated(true);
@@ -89,7 +96,7 @@ export const LoanProvider = ({ children }) => {
                 level: 1,
                 badges: [],
                 streak: 0,
-                trustScore: 500,
+                trustScore: 50,
                 stats: {
                     totalLoans: 0,
                     completedLoans: 0,
@@ -98,6 +105,28 @@ export const LoanProvider = ({ children }) => {
                     lastPaymentDate: null
                 }
             });
+        }
+    };
+
+    // Helper: Fetch the authoritative trust score from DB and sync to gamification state.
+    // This is the ONLY way trustScore should be updated in the frontend.
+    const refreshTrustScore = async (userId) => {
+        if (!userId) return;
+        try {
+            const { data: profile, error } = await supabase
+                .from('profiles')
+                .select('trust_score')
+                .eq('id', userId)
+                .single();
+
+            if (!error && profile) {
+                setGamification(prev => ({
+                    ...prev,
+                    trustScore: profile.trust_score ?? prev.trustScore
+                }));
+            }
+        } catch (err) {
+            console.error('Error refreshing trust score:', err);
         }
     };
 
@@ -767,6 +796,11 @@ export const LoanProvider = ({ children }) => {
                 setLoans(prev => prev.map(l => l.id === loanId ? mappedLoan : l));
                 await updateLoanStatus(loanId, mappedLoan);
             }
+
+            // CRITICAL FIX: Refresh trust score from DB after payment.
+            // The DB trigger (calculate_payment_trust_delta) has already updated
+            // profiles.trust_score — we just need to read the fresh value.
+            await refreshTrustScore(user.id);
 
             const loan = loans.find(l => l.id === loanId) || (freshLoan ? mapLoanFromDB(freshLoan, user) : null);
             updateStatsOnPayment(paymentData.date, loan?.dueDate);
