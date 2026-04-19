@@ -224,16 +224,14 @@ BEGIN
     END IF;
   END IF;
 
-  -- ══════════════════════════════════════════════════════════════
-  -- SAFE EVENT TYPE VALIDATION (Fallback to prevent silent failures)
-  -- ══════════════════════════════════════════════════════════════
+  -- Fallback to prevent silent failures
   IF v_event_type NOT IN ('payment_success', 'payment_partial', 'payment_early', 'payment_late', 'payment_missed') THEN
     RAISE NOTICE 'Invalid event_type %, falling back to payment_partial', v_event_type;
     v_event_type := 'payment_partial';
   END IF;
 
   v_score_after := v_score_before + v_delta + v_early_bonus;
-  v_score_after := LEAST(GREATEST(v_score_after, 0.0), 100.0);
+  v_score_after := GREATEST(v_score_after, 0.0);
 
   -- ══════════════════════════════════════════════════════════════
   -- STEP F: Log Transaction (idempotency wrapper & NON-BLOCKING exception handler)
