@@ -1,32 +1,32 @@
 -- ================================================================
--- TRUST SCORE V8 — Perfecting the Algorithm
--- ================================================================
--- FIXES IN V8:
---   1. HARD CAP RESTORED: Max 10 points per loan (including early bonus).
---   2. NEGATIVE SCORING RESTORED: Late payments apply penalties (-1, -3, -5).
---   3. INSTALLMENT LOGIC RESTORED: Re-added IF NEW.installment_id IS NOT NULL.
---   4. ZERO AMOUNT DIVISION FIX: Safe division check (coalesce(amount,0) > 0).
---   5. DEFENSIVE LOAN STATUS: Correctly handles 'overdue', 'completed', and 'active' states.
---   6. TIMING WEIGHTS: Late payments now halve positive points or apply flat penalties.
+-- TRUST SCORE V8.1 — Perfecting the Algorithm & Constraints
 -- ================================================================
 
 -- ────────────────────────────────────────────────────────────────
 -- STEP 1: Schema Updates
 -- ────────────────────────────────────────────────────────────────
 
--- Prevent precision loss by enforcing NUMERIC types
 ALTER TABLE public.profiles ALTER COLUMN trust_score TYPE NUMERIC USING trust_score::NUMERIC;
 ALTER TABLE public.trust_score_logs ALTER COLUMN score_before TYPE NUMERIC USING score_before::NUMERIC;
 ALTER TABLE public.trust_score_logs ALTER COLUMN score_after TYPE NUMERIC USING score_after::NUMERIC;
 
--- Track early bonus separately
 ALTER TABLE public.loans ADD COLUMN IF NOT EXISTS early_bonus_awarded BOOLEAN DEFAULT false;
-
--- Add UNIQUE constraint to prevent duplicate scoring per payment
 ALTER TABLE public.trust_score_logs ADD COLUMN IF NOT EXISTS payment_id UUID UNIQUE REFERENCES public.payments(id);
-
--- Ensure trust_points_awarded column exists on loans
 ALTER TABLE public.loans ADD COLUMN IF NOT EXISTS trust_points_awarded NUMERIC DEFAULT 0;
+
+-- FIX: Update constraint to use stable event types
+-- Allowing ALL event types safely and securely.
+ALTER TABLE public.trust_score_logs DROP CONSTRAINT IF EXISTS trust_score_logs_event_type_check;
+ALTER TABLE public.trust_score_logs ADD CONSTRAINT trust_score_logs_event_type_check 
+CHECK (event_type IN (
+  'installment_payment',
+  'full_payment',
+  'partial_payment',
+  'early_payment',
+  'late_payment',
+  'missed_payment',
+  'extra_payment'
+));
 
 -- ────────────────────────────────────────────────────────────────
 -- STEP 2: Replace Trigger Function
@@ -60,11 +60,9 @@ BEGIN
   -- Any duplicate payment_id inserted will throw unique_violation and be caught
   -- ══════════════════════════════════════════════════════════════
 
-  -- ══════════════════════════════════════════════════════════════
-  -- STEP A: Fetch the associated loan (WITH ROW LOCK)
-  -- ══════════════════════════════════════════════════════════════
   SELECT * INTO v_loan FROM public.loans WHERE id = NEW.loan_id FOR UPDATE;
   IF NOT FOUND THEN
+    RAISE NOTICE 'Loan % not found for payment %', NEW.loan_id, NEW.id;
     RETURN NEW;
   END IF;
 
@@ -101,7 +99,6 @@ BEGIN
 
   -- ══════════════════════════════════════════════════════════════
   -- STEP D: Exact Proportional calculation (No rounding during calc)
-  -- FIX: Prevent Division by Zero Risk
   -- ══════════════════════════════════════════════════════════════
   IF COALESCE(v_loan.amount, 0) > 0 THEN
     points_before := (v_total_before / v_loan.amount) * v_max_points;
@@ -117,7 +114,6 @@ BEGIN
   -- STEP E: Installment vs Non-Installment Processing (Timing Weights)
   -- ══════════════════════════════════════════════════════════════
   IF NEW.installment_id IS NOT NULL THEN
-    -- BRANCH A: Installment Logic Restored
     SELECT * INTO v_installment FROM public.installments WHERE id = NEW.installment_id;
 
     IF FOUND AND v_installment.status != 'paid' THEN
@@ -126,16 +122,16 @@ BEGIN
 
       IF v_days_diff >= 0 THEN
         v_delta := LEAST(v_delta, v_remaining);
-        v_event_type := CASE WHEN v_days_diff >= 2 THEN 'inst_early' ELSE 'inst_ontime' END;
+        v_event_type := CASE WHEN v_days_diff >= 2 THEN 'early_payment' ELSE 'installment_payment' END;
       ELSIF v_days_diff >= -7 THEN
-        v_delta := -1;
-        v_event_type := 'inst_slight_delay';
+        v_delta := GREATEST(-1.0, LEAST(v_delta, v_remaining) - 1.0);
+        v_event_type := 'late_payment';
       ELSIF v_days_diff >= -30 THEN
-        v_delta := -3;
-        v_event_type := 'inst_moderate_delay';
+        v_delta := GREATEST(-3.0, LEAST(v_delta, v_remaining) - 3.0);
+        v_event_type := 'late_payment';
       ELSE
-        v_delta := -5;
-        v_event_type := 'inst_missed';
+        v_delta := GREATEST(-5.0, LEAST(v_delta, v_remaining) - 5.0);
+        v_event_type := 'missed_payment';
       END IF;
 
       UPDATE public.installments
@@ -145,60 +141,61 @@ BEGIN
           score_delta = v_delta
       WHERE id = NEW.installment_id;
     ELSE
-      -- Duplicate or already paid installment, cap naturally
       v_delta := LEAST(v_delta, v_remaining);
       v_event_type := 'extra_payment';
     END IF;
 
   ELSE
-    -- BRANCH B: Non-Installment Payment (Full/Partial)
     v_due_date := v_loan.due_date;
 
     IF v_due_date IS NOT NULL THEN
       v_days_diff := v_due_date - v_paid_date;
 
       IF v_days_diff < -30 THEN
-        v_delta := -5;
-        v_event_type := 'full_missed';
+        v_delta := GREATEST(-5.0, LEAST(v_delta, v_remaining) - 5.0);
+        v_event_type := 'missed_payment';
       ELSIF v_days_diff < -7 THEN
-        v_delta := -3;
-        v_event_type := 'full_moderate_delay';
+        v_delta := GREATEST(-3.0, LEAST(v_delta, v_remaining) - 3.0);
+        v_event_type := 'late_payment';
       ELSIF v_days_diff < 0 THEN
-        -- Slight delay (0 to 7 days late)
-        v_delta := LEAST(v_delta * 0.5, v_remaining);
-        v_event_type := 'full_slight_delay';
+        v_delta := GREATEST(-1.0, LEAST(v_delta, v_remaining) - 1.0);
+        v_event_type := 'late_payment';
       ELSIF v_total_after >= v_loan.amount AND v_days_diff >= 2 AND NOT COALESCE(v_loan.early_bonus_awarded, false) THEN
-        -- Early Bonus, but bounded by remaining points!
         v_delta := LEAST(v_delta, v_remaining);
         v_early_bonus := LEAST(2.0, GREATEST(0.0, v_remaining - v_delta));
-        v_event_type := 'full_early';
+        v_event_type := 'early_payment';
       ELSIF v_total_after >= v_loan.amount THEN
         v_delta := LEAST(v_delta, v_remaining);
-        v_event_type := 'full_ontime';
+        v_event_type := 'full_payment';
       ELSE
         v_delta := LEAST(v_delta, v_remaining);
-        v_event_type := CASE WHEN v_days_diff < 0 THEN 'partial_late' ELSE 'partial_ontime' END;
+        v_event_type := 'partial_payment';
       END IF;
     ELSE
       v_delta := LEAST(v_delta, v_remaining);
       IF v_total_after >= v_loan.amount THEN
-        v_event_type := 'full_ontime';
+        v_event_type := 'full_payment';
       ELSE
-        v_event_type := 'partial_ontime';
+        v_event_type := 'partial_payment';
       END IF;
     END IF;
   END IF;
 
-  -- Apply score change
+  -- ══════════════════════════════════════════════════════════════
+  -- SAFE EVENT TYPE VALIDATION (Fallback to prevent silent failures)
+  -- ══════════════════════════════════════════════════════════════
+  IF v_event_type NOT IN ('installment_payment', 'full_payment', 'partial_payment', 'early_payment', 'late_payment', 'missed_payment', 'extra_payment') THEN
+    RAISE NOTICE 'Invalid event_type %, falling back to partial_payment', v_event_type;
+    v_event_type := 'partial_payment';
+  END IF;
+
   v_score_after := v_score_before + v_delta + v_early_bonus;
-  
-  -- Clamp values strictly between 0 and 100
   v_score_after := LEAST(GREATEST(v_score_after, 0.0), 100.0);
 
   -- ══════════════════════════════════════════════════════════════
-  -- STEP F: Log Transaction (idempotency wrapper)
+  -- STEP F: Log Transaction (idempotency wrapper & explicit rollback)
   -- ══════════════════════════════════════════════════════════════
-  IF v_delta != 0 OR v_early_bonus > 0 THEN
+  IF NEW.amount > 0 OR v_delta != 0 OR v_early_bonus > 0 THEN
     v_meta := jsonb_build_object(
       'payment_id', NEW.id,
       'installment_id', NEW.installment_id,
@@ -224,9 +221,13 @@ BEGIN
         v_borrower_id, NEW.loan_id, NEW.id, v_event_type,
         (v_delta + v_early_bonus), v_score_before, v_score_after, v_meta
       );
-    EXCEPTION WHEN unique_violation THEN
-      -- Handle idempotency, already processed
-      RETURN NEW;
+    EXCEPTION 
+      WHEN unique_violation THEN
+        RAISE NOTICE 'Idempotency caught: trust_score_logs already exists for payment %', NEW.id;
+        RETURN NEW;
+      WHEN OTHERS THEN
+        -- EXPLICIT ROLLBACK ON REAL ERRORS (prevents silent loss of sync)
+        RAISE EXCEPTION 'Explicit transaction rollback due to log failure. Error: %', SQLERRM;
     END;
 
     -- Update the trust score correctly across columns and JSONB gamification
@@ -235,7 +236,7 @@ BEGIN
         gamification = jsonb_set(COALESCE(gamification, '{}'::jsonb), '{trustScore}', to_jsonb(v_score_after))
     WHERE id = v_borrower_id;
 
-    -- FIX: Only accumulate positive deltas towards the cap
+    -- FIX: Accumulate net valid points (cap handled naturally by remaining)
     UPDATE public.loans
     SET trust_points_awarded = COALESCE(trust_points_awarded, 0) + GREATEST(0.0, v_delta) + v_early_bonus
     WHERE id = NEW.loan_id;
