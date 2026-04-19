@@ -83,7 +83,7 @@ const MockPayment = ({ loan, amount, onSuccess, onCancel }) => {
         setIsProcessing(true);
         setStep('processing');
         
-        const generatedTxnId = window.crypto?.randomUUID?.() || `txn_${Date.now()}`;
+        const generatedTxnId = window.crypto?.randomUUID?.() || `txn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
         setTransactionId(generatedTxnId);
 
         // 1. Simulate gateway processing

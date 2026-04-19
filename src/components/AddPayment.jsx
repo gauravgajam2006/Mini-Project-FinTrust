@@ -28,9 +28,12 @@ const AddPayment = ({ loanId, outstandingAmount, onPaymentAdded, onCancel }) => 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
+        const generatedTxnId = window.crypto?.randomUUID?.() || `txn_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
         const paymentData = {
             ...formData,
-            amount: parseFloat(formData.amount)
+            amount: parseFloat(formData.amount),
+            transactionId: generatedTxnId
         };
 
         // Validate
