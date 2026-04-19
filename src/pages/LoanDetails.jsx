@@ -108,8 +108,8 @@ const LoanDetails = () => {
             </div>
 
             <div className="details-grid">
-                {/* Payment Section - Shows for active/overdue loans */}
-                {(loan.status === 'active' || loan.status === 'overdue') && (
+                {/* Payment Section - Shows for active/overdue loans with outstanding balance */}
+                {(loan.status === 'active' || loan.status === 'overdue') && outstandingAmount > 0 && (
                     <div className="payment-section-full">
                         {!showPaymentForm ? (
                             <div className="outstanding-card">
@@ -204,7 +204,7 @@ const LoanDetails = () => {
                         </div>
                     )}
 
-                    {loan.status === 'active' && isBorrower && (
+                    {loan.status === 'active' && isBorrower && outstandingAmount > 0 && (
                         <div className="finalize-loan-box">
                             <h4>Finalize Loan</h4>
                             <p>To finalize this loan, please add a formal payment record for the remaining balance.</p>

@@ -756,11 +756,10 @@ export const LoanProvider = ({ children }) => {
             if (!loanFetchErr && freshLoan) {
                 const mappedLoan = mapLoanFromDB(freshLoan, user);
                 setLoans(prev => prev.map(l => l.id === loanId ? mappedLoan : l));
+                await updateLoanStatus(loanId, mappedLoan);
             }
 
-            await updateLoanStatus(loanId);
-
-            const loan = loans.find(l => l.id === loanId);
+            const loan = loans.find(l => l.id === loanId) || (freshLoan ? mapLoanFromDB(freshLoan, user) : null);
             updateStatsOnPayment(paymentData.date, loan?.dueDate);
             logActivity('PAYMENT_MADE', `Payment of ₹${paymentData.amount} made`, loanId);
 
@@ -811,22 +810,33 @@ export const LoanProvider = ({ children }) => {
     };
 
     // UPDATE LOAN STATUS
-    const updateLoanStatus = async (loanId) => {
-        const loan = loans.find(l => l?.id === loanId);
+    const updateLoanStatus = async (loanId, manualLoanData = null) => {
+        const loan = manualLoanData || loans.find(l => l?.id === loanId);
         if (!loan) return { success: false };
 
         let newStatus = loan?.status;
-        const outstanding = (parseFloat(loan?.amount) || 0) - (parseFloat(loan?.amountPaid) || 0);
+        const amount = parseFloat(loan?.amount) || 0;
+        const amountPaid = parseFloat(loan?.amountPaid) || 0;
+        const outstanding = amount - amountPaid;
+        
         const today = new Date();
         const dueDate = new Date(loan?.dueDate);
 
-        if (outstanding <= 0) newStatus = 'completed';
-        else if (dueDate < today) newStatus = 'overdue';
-        else newStatus = 'active';
+        // Robust completion check
+        if (outstanding <= 0.01) { // Handle small float precision issues
+            newStatus = 'completed';
+        } else if (dueDate < today && newStatus !== 'completed') {
+            newStatus = 'overdue';
+        } else if (newStatus !== 'completed') {
+            newStatus = 'active';
+        }
 
         if (newStatus !== loan?.status) {
             await updateLoan(loanId, { status: newStatus });
-            if (newStatus === 'completed') updateStatsOnLoanComplete();
+            if (newStatus === 'completed') {
+                updateStatsOnLoanComplete();
+                toast.success('🎉 Loan fully repaid and completed!');
+            }
         }
         return { success: true, status: newStatus };
     };
