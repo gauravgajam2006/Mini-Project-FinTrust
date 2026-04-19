@@ -963,6 +963,34 @@ export const LoanProvider = ({ children }) => {
         return activities.filter(a => a.loan_id === loanId);
     };
 
+    // --- SIMULATED DEMO GATEWAY FUNCTIONS ---
+    const createDemoOrder = async (amount, currency = 'INR', loanId) => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    order_id: `order_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+                    amount: amount,
+                    currency: currency,
+                    loan_id: loanId
+                });
+            }, 400); // Simulate network delay
+        });
+    };
+
+    const verifyDemoPayment = async (orderId, paymentId, signature) => {
+        // Simulate Razorpay signature verification
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const expectedSignature = btoa(`${orderId}|${paymentId}`);
+                if (signature === expectedSignature) {
+                    resolve({ success: true, message: 'Signature verified' });
+                } else {
+                    resolve({ success: false, error: 'Invalid payment signature' });
+                }
+            }, 800); // Simulated verification delay
+        });
+    };
+
     return (
         <LoanContext.Provider value={{
             loans, user, loading, isAuthenticated, activities, gamification,
@@ -974,7 +1002,8 @@ export const LoanProvider = ({ children }) => {
             getTotalAmountOwed, getPendingLoans, getOverdueLoans,
             getActivityFeed, getLoanActivityLog,
             markNotificationRead, markAllNotificationsRead, deleteNotification,
-            respondToLoan, getPendingApprovalLoans, sendOtp, verifyOtp
+            respondToLoan, getPendingApprovalLoans, sendOtp, verifyOtp,
+            createDemoOrder, verifyDemoPayment
         }}>
             {children}
         </LoanContext.Provider>
