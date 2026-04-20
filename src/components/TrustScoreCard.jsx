@@ -28,25 +28,31 @@ ChartJS.register(
 const TrustScoreCard = ({ score = 0, historyData = [] }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
 
-  // Normalize trust score from 0-1000 down to 0-100 if needed, or 0-100 to 0-100
-  // Given user's example in request, they want it 0-100: "Red (0-40), Yellow (41-70), Green (71-100)"
-  // But FinTrust seems to use a 0-1000 scale in LoanContext (trustScore: 500 default).
-  // Wait, the user explicitly asked for 0-100 score in the concept: "Red (0–40), Yellow (41–70), Green (71–100)"
-  // Let me map 0-1000 to 0-100.
-  const displayScore = typeof score === 'number' && score > 100 ? Math.round(score / 10) : score;
+  // Use the trust score directly from the database — no normalization needed.
+  // The backend trigger (calculate_payment_trust_delta) maintains the authoritative score.
+  const displayScore = Math.round(Number(score) || 0);
 
   useEffect(() => {
-    let start = 0;
-    const end = displayScore;
-    if (start === end) return;
+    // Reset animated score when displayScore changes
+    setAnimatedScore(0);
 
-    let targetDuration = 1500;
-    let incrementTime = targetDuration / end;
-    
-    let timer = setInterval(() => {
-      start += 1;
-      setAnimatedScore(start);
-      if (start === end) clearInterval(timer);
+    const end = displayScore;
+    if (end <= 0) {
+      setAnimatedScore(0);
+      return;
+    }
+
+    const targetDuration = 1500; // ms
+    const incrementTime = Math.max(targetDuration / end, 10); // min 10ms to prevent runaway
+    let current = 0;
+
+    const timer = setInterval(() => {
+      current += 1;
+      if (current >= end) {
+        current = end;
+        clearInterval(timer);
+      }
+      setAnimatedScore(current);
     }, incrementTime);
 
     return () => clearInterval(timer);
@@ -65,7 +71,9 @@ const TrustScoreCard = ({ score = 0, historyData = [] }) => {
   };
 
   const circumference = 2 * Math.PI * 90; // r=90
-  const strokeDashoffset = circumference - (circumference * displayScore) / 100;
+  // Clamp progress ring to 100% max, but display the actual number
+  const ringPercent = Math.min(displayScore, 100);
+  const strokeDashoffset = circumference - (circumference * ringPercent) / 100;
 
   // Chart data setup
   const defaultHistoryData = historyData.length > 0 ? historyData : [30, 45, 42, 60, 55, displayScore];

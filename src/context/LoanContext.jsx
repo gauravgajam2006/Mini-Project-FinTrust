@@ -24,7 +24,7 @@ export const LoanProvider = ({ children }) => {
         level: 1,
         badges: [],
         streak: 0,
-        trustScore: 500,
+        trustScore: 50,
         stats: {
             totalLoans: 0,
             completedLoans: 0,
@@ -80,7 +80,15 @@ export const LoanProvider = ({ children }) => {
             if (profile?.gamification) {
                 // Ensure level and badges are up to date with points
                 const updatedGam = calculateGamificationUpdate(profile.gamification);
+                // CRITICAL: Use the authoritative trust_score from the DB column,
+                // NOT the stale value inside the gamification JSONB.
+                const realTrustScore = parseFloat(profile.trust_score) || 50;
+                updatedGam.trustScore = Math.round(realTrustScore * 100) / 100;
                 setGamification(updatedGam);
+            } else {
+                // No gamification data yet — still use the real DB trust_score
+                const realTrustScore = parseFloat(profile?.trust_score) || 50;
+                setGamification(prev => ({ ...prev, trustScore: Math.round(realTrustScore * 100) / 100 }));
             }
             
             setIsAuthenticated(true);
@@ -92,7 +100,7 @@ export const LoanProvider = ({ children }) => {
                 level: 1,
                 badges: [],
                 streak: 0,
-                trustScore: 500,
+                trustScore: 50,
                 stats: {
                     totalLoans: 0,
                     completedLoans: 0,
@@ -877,13 +885,17 @@ export const LoanProvider = ({ children }) => {
     };
 
     // GAMIFICATION logic (debounced sync with DB)
+    // IMPORTANT: Strip trustScore from the JSONB before saving to avoid
+    // overwriting the authoritative profiles.trust_score column managed by DB triggers.
     useEffect(() => {
         if (!user || !isAuthenticated) return;
         const timer = setTimeout(async () => {
             try {
+                // Remove trustScore so we don't overwrite the DB-trigger-managed value
+                const { trustScore: _strip, ...gamToSave } = gamification;
                 await supabase
                     .from('profiles')
-                    .update({ gamification })
+                    .update({ gamification: gamToSave })
                     .eq('id', user.id);
             } catch (err) {
                 console.error('Failed to save gamification:', err);
@@ -892,7 +904,13 @@ export const LoanProvider = ({ children }) => {
         return () => clearTimeout(timer);
     }, [gamification, user, isAuthenticated]);
 
-    const updateStatsOnLoanCreate = () => {
+    const updateStatsOnLoanCreate = async () => {
+        // Re-fetch the real trust_score from DB to keep it in sync
+        let realTrustScore = gamification.trustScore;
+        if (user) {
+            const { data: prof } = await supabase.from('profiles').select('trust_score').eq('id', user.id).single();
+            if (prof) realTrustScore = Math.round((parseFloat(prof.trust_score) || 50) * 100) / 100;
+        }
         setGamification(prev => {
             const next = {
                 ...prev,
@@ -900,6 +918,7 @@ export const LoanProvider = ({ children }) => {
                 points: prev.points + 50
             };
             const updated = calculateGamificationUpdate(next);
+            updated.trustScore = realTrustScore;
             if (updated.level > prev.level) {
                 toast.success(`🎉 Level Up! You reached Level ${updated.level}: ${updated.title || 'Advanced'}`);
             }
@@ -909,8 +928,12 @@ export const LoanProvider = ({ children }) => {
 
     const updateStatsOnPayment = async (paymentDate, dueDate) => {
         if (!user) return;
-        // Fetch to ensure we use the backend-calculated trustScore and don't overwrite it
-        const { data: userProfile } = await supabase.from('profiles').select('gamification').eq('id', user.id).single();
+        // Fetch profile to get both gamification data and the authoritative trust_score
+        const { data: userProfile } = await supabase
+            .from('profiles')
+            .select('gamification, trust_score')
+            .eq('id', user.id)
+            .single();
         if (userProfile?.gamification) {
             const isOnTime = new Date(paymentDate) <= new Date(dueDate);
             const next = {
@@ -924,6 +947,9 @@ export const LoanProvider = ({ children }) => {
             };
             
             const updated = calculateGamificationUpdate(next);
+            // Always use the real DB trust_score, not the JSONB copy
+            const realTrustScore = parseFloat(userProfile.trust_score) || 50;
+            updated.trustScore = Math.round(realTrustScore * 100) / 100;
             const currentLevel = gamification.level;
             
             if (updated.level > currentLevel) {
@@ -934,7 +960,13 @@ export const LoanProvider = ({ children }) => {
         }
     };
 
-    const updateStatsOnLoanComplete = () => {
+    const updateStatsOnLoanComplete = async () => {
+        // Re-fetch the real trust_score from DB to keep it in sync
+        let realTrustScore = gamification.trustScore;
+        if (user) {
+            const { data: prof } = await supabase.from('profiles').select('trust_score').eq('id', user.id).single();
+            if (prof) realTrustScore = Math.round((parseFloat(prof.trust_score) || 50) * 100) / 100;
+        }
         setGamification(prev => {
             const next = {
                 ...prev,
@@ -942,6 +974,7 @@ export const LoanProvider = ({ children }) => {
                 points: prev.points + 200
             };
             const updated = calculateGamificationUpdate(next);
+            updated.trustScore = realTrustScore;
             if (updated.level > prev.level) {
                 toast.success(`🎉 Level Up! You reached Level ${updated.level}`);
             }

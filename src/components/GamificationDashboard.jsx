@@ -72,12 +72,12 @@ const GamificationDashboard = () => {
                         </div>
                     </div>
                     <div className="trust-score-display">
-                        <div className="score-value">{Number(gamification.trustScore || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
+                        <div className="score-value">{Math.round(Number(gamification.trustScore || 0))}</div>
                         <div className="score-meter">
                             <div
                                 className="score-fill"
                                 style={{
-                                    width: `${gamification.trustScore}%`,
+                                    width: `${Math.min(gamification.trustScore || 0, 100)}%`,
                                     background: getTrustScoreColor(gamification.trustScore)
                                 }}
                             />
