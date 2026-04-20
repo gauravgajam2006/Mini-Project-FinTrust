@@ -102,7 +102,7 @@ const LoanDetails = () => {
                             📨 Remind
                         </button>
                     )}
-                    {isLender && loan.status === 'active' && outstandingAmount > 0 && (
+                    {loan.user_id === user.id && isLender && (
                         <Link to={`/loan/${id}/edit`} className="btn-primary">
                             ✏️ Edit
                         </Link>
