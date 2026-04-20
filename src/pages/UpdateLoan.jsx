@@ -17,9 +17,10 @@ const UpdateLoan = () => {
     useEffect(() => {
         const loanData = getLoanDetails(id);
         if (loanData) {
-            // Safety Check: Double verify that the user accessing this form is the lender.
-            if (loanData.type !== 'lent') {
-                navigate('/loans');
+            // Safety Check: Verify role, status, and outstanding balance.
+            const outstanding = loanData.amount - loanData.amountPaid;
+            if (loanData.type !== 'lent' || loanData.status !== 'active' || outstanding < 1) {
+                navigate(`/loan/${id}`);
                 return;
             }
 

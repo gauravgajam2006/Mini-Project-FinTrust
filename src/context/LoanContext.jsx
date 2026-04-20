@@ -148,7 +148,7 @@ export const LoanProvider = ({ children }) => {
 
     // GET SINGLE LOAN DETAILS
     const getLoanDetails = (loanId) => {
-        return loans.find(l => l.id === loanId) || null;
+        return loans.find(l => String(l.id) === String(loanId)) || null;
     };
 
     // GET LOANS FILTERED BY TYPE/STATUS
@@ -163,13 +163,13 @@ export const LoanProvider = ({ children }) => {
 
     // GET REPAYMENTS FOR A SPECIFIC LOAN
     const getRepaymentsByLoan = (loanId) => {
-        const loan = loans.find(l => l?.id === loanId);
+        const loan = loans.find(l => String(l?.id) === String(loanId));
         return loan?.payments || [];
     };
 
     // CALCULATE OUTSTANDING AMOUNT
     const calculateOutstandingAmount = (loanId) => {
-        const loan = loans.find(l => l?.id === loanId);
+        const loan = loans.find(l => String(l?.id) === String(loanId));
         if (!loan) return 0;
         const outstanding = (loan?.amount || 0) - (loan?.amountPaid || 0);
         return outstanding < 1 ? 0 : outstanding;
@@ -364,7 +364,7 @@ export const LoanProvider = ({ children }) => {
         if (!user) return { success: false, error: 'User not authenticated' };
         try {
             // Try local state first, then fetch from DB if not found
-            let loan = loans.find(l => l.id === loanId);
+            let loan = loans.find(l => String(l.id) === String(loanId));
             
             if (!loan) {
                 // Loan not in local state — fetch directly from database
@@ -405,7 +405,7 @@ export const LoanProvider = ({ children }) => {
             if (error) throw error;
 
             // Update local state
-            setLoans(prev => prev.map(l => l.id === loanId ? { ...l, status: newStatus } : l));
+            setLoans(prev => prev.map(l => String(l.id) === String(loanId) ? { ...l, status: newStatus } : l));
 
             // Notify the loan creator
             const creatorId = loan.created_by || loan.user_id;
@@ -585,7 +585,7 @@ export const LoanProvider = ({ children }) => {
         setLoading(true);
         try {
             // First, locate the loan to enforce role-based rules
-            const existingLoan = loans.find(l => l.id === loanId);
+            const existingLoan = loans.find(l => String(l.id) === String(loanId));
             if (!existingLoan) throw new Error('Loan not found');
 
             const isLender = existingLoan.type === 'lent';
@@ -599,10 +599,19 @@ export const LoanProvider = ({ children }) => {
                 throw new Error('Security Error: Core financial fields cannot be modified after creation.');
             }
 
-            // 2. Prevent non-lenders from editing terms
+            // 2. Prevent non-lenders from editing terms and ensure rules are followed
             const isEditingTerms = keysToUpdate.includes('interestRate') || keysToUpdate.includes('dueDate');
-            if (isEditingTerms && !isLender) {
-                throw new Error('Permission Error: Only the lender can modify the interest rate and due date.');
+            if (isEditingTerms) {
+                if (!isLender) {
+                    throw new Error('Permission Error: Only the lender can modify the interest rate and due date.');
+                }
+                const isCompleted = (existingLoan.amount - existingLoan.amountPaid) < 1;
+                if (existingLoan.status !== 'active') {
+                    throw new Error('Permission Error: Only active loans can be edited.');
+                }
+                if (isCompleted) {
+                    throw new Error('Permission Error: Completed loans cannot be edited.');
+                }
             }
 
             const updateObj = {};
@@ -626,7 +635,7 @@ export const LoanProvider = ({ children }) => {
 
             if (error) throw error;
 
-            setLoans(prev => prev.map(loan => loan.id === loanId ? { ...loan, ...updatedData } : loan));
+            setLoans(prev => prev.map(loan => String(loan.id) === String(loanId) ? { ...loan, ...updatedData } : loan));
             return { success: true };
         } catch (error) {
             console.error('Error updating loan:', error);
@@ -652,7 +661,7 @@ export const LoanProvider = ({ children }) => {
                 return { success: false, error: "You can only delete loans you created." };
             }
             
-            setLoans(prev => prev.filter(loan => loan.id !== loanId));
+            setLoans(prev => prev.filter(loan => String(loan.id) !== String(loanId)));
             return { success: true };
         } catch (error) {
             // Revert state just in case, though it shouldn't have changed yet
@@ -796,11 +805,11 @@ export const LoanProvider = ({ children }) => {
 
             if (!loanFetchErr && freshLoan) {
                 const mappedLoan = mapLoanFromDB(freshLoan, user);
-                setLoans(prev => prev.map(l => l.id === loanId ? mappedLoan : l));
+                setLoans(prev => prev.map(l => String(l.id) === String(loanId) ? mappedLoan : l));
                 await updateLoanStatus(loanId, mappedLoan);
             }
 
-            const loan = loans.find(l => l.id === loanId) || (freshLoan ? mapLoanFromDB(freshLoan, user) : null);
+            const loan = loans.find(l => String(l.id) === String(loanId)) || (freshLoan ? mapLoanFromDB(freshLoan, user) : null);
             await updateStatsOnPayment(paymentData.date, loan?.dueDate);
             logActivity('PAYMENT_MADE', `Payment of ₹${paymentData.amount} made`, loanId);
 
@@ -852,7 +861,7 @@ export const LoanProvider = ({ children }) => {
 
     // UPDATE LOAN STATUS
     const updateLoanStatus = async (loanId, manualLoanData = null) => {
-        const loan = manualLoanData || loans.find(l => l?.id === loanId);
+        const loan = manualLoanData || loans.find(l => String(l?.id) === String(loanId));
         if (!loan) return { success: false };
 
         const amount = parseFloat(loan?.amount) || 0;
