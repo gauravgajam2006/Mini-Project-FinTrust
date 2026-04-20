@@ -17,19 +17,16 @@ const UpdateLoan = () => {
     useEffect(() => {
         const loanData = getLoanDetails(id);
         if (loanData) {
-            // Pre-fill form with existing loan data
+            // Safety Check: Double verify that the user accessing this form is the lender.
+            if (loanData.type !== 'lent') {
+                navigate('/loans');
+                return;
+            }
+
+            // ONLY prefill what they are allowed to edit
             setFormData({
-                type: loanData.type,
-                amount: loanData.amount,
-                borrowerName: loanData.type === 'lent' ? loanData.borrowerName : loanData.lenderName,
-                borrowerEmail: loanData.type === 'lent' ? loanData.borrowerEmail : loanData.lenderEmail,
-                lenderName: user.name,
-                lenderEmail: user.email,
                 interestRate: loanData.interestRate,
-                dueDate: loanData.dueDate,
-                description: loanData.description,
-                repaymentSchedule: loanData.repaymentSchedule,
-                status: loanData.status
+                dueDate: loanData.dueDate
             });
         } else {
             navigate('/loans');
@@ -48,28 +45,19 @@ const UpdateLoan = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const loanData = {
-            ...formData,
-            amount: parseFloat(formData.amount),
+        const updates = {
             interestRate: parseFloat(formData.interestRate) || 0,
+            dueDate: formData.dueDate
         };
 
-        if (formData.type === 'borrowed') {
-            loanData.lenderName = formData.borrowerName;
-            loanData.lenderEmail = formData.borrowerEmail;
-            loanData.borrowerName = user.name;
-            loanData.borrowerEmail = user.email;
-        }
-
-        const validation = validateLoanData(loanData);
-
-        if (!validation.isValid) {
-            setErrors(validation.errors);
+        if (!updates.dueDate) {
+            setErrors({ dueDate: 'Due Date is required' });
             return;
         }
 
         setIsSubmitting(true);
-        const result = await updateLoan(id, loanData);
+        // Only passing the restricted fields.
+        const result = await updateLoan(id, updates);
 
         if (result.success) {
             navigate(`/loan/${id}`);
@@ -84,63 +72,18 @@ const UpdateLoan = () => {
     return (
         <div className="create-loan">
             <div className="page-header">
-                <h1>✏️ Edit Loan</h1>
-                <p>Update loan information</p>
+                <h1>✏️ Edit Loan Terms</h1>
+                <p>Modify specific loan conditions</p>
+                <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #F59E0B', borderRadius: '8px', marginTop: '1rem', color: '#B45309' }}>
+                    <strong>Note:</strong> Due to security and finality rules, lenders can only modify the Interest Rate and the Due Date.
+                </div>
             </div>
 
             <div className="loan-form-card">
                 <form onSubmit={handleSubmit}>
-                    {/* Contact Information */}
                     <div className="form-section">
-                        <h3>{formData.type === 'lent' ? 'Borrower' : 'Lender'} Information</h3>
+                        <h3>Adjustable Terms</h3>
                         <div className="form-row">
-                            <div className="form-group">
-                                <label>Name *</label>
-                                <input
-                                    type="text"
-                                    name="borrowerName"
-                                    value={formData.borrowerName}
-                                    onChange={handleChange}
-                                    placeholder="Enter name"
-                                    className={errors.borrowerName ? 'error' : ''}
-                                />
-                                {errors.borrowerName && <span className="error-text">{errors.borrowerName}</span>}
-                            </div>
-
-                            <div className="form-group">
-                                <label>Email</label>
-                                <input
-                                    type="email"
-                                    name="borrowerEmail"
-                                    value={formData.borrowerEmail}
-                                    onChange={handleChange}
-                                    placeholder="email@example.com"
-                                    className={errors.borrowerEmail ? 'error' : ''}
-                                />
-                                {errors.borrowerEmail && <span className="error-text">{errors.borrowerEmail}</span>}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Loan Details */}
-                    <div className="form-section">
-                        <h3>Loan Details</h3>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Amount (₹) *</label>
-                                <input
-                                    type="number"
-                                    name="amount"
-                                    value={formData.amount}
-                                    onChange={handleChange}
-                                    placeholder="0.00"
-                                    min="0"
-                                    step="0.01"
-                                    className={errors.amount ? 'error' : ''}
-                                />
-                                {errors.amount && <span className="error-text">{errors.amount}</span>}
-                            </div>
-
                             <div className="form-group">
                                 <label>Interest Rate (%)</label>
                                 <input
@@ -154,9 +97,7 @@ const UpdateLoan = () => {
                                     step="0.1"
                                 />
                             </div>
-                        </div>
 
-                        <div className="form-row">
                             <div className="form-group">
                                 <label>Due Date *</label>
                                 <input
@@ -168,46 +109,6 @@ const UpdateLoan = () => {
                                 />
                                 {errors.dueDate && <span className="error-text">{errors.dueDate}</span>}
                             </div>
-
-                            <div className="form-group">
-                                <label>Repayment Schedule *</label>
-                                <select
-                                    name="repaymentSchedule"
-                                    value={formData.repaymentSchedule}
-                                    onChange={handleChange}
-                                >
-                                    <option value="lump_sum">Lump Sum (One-time payment)</option>
-                                    <option value="emi">EMI (Equated Monthly Installment)</option>
-                                    <option value="monthly">Monthly</option>
-                                    <option value="weekly">Weekly</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Status</label>
-                                <select
-                                    name="status"
-                                    value={formData.status}
-                                    onChange={handleChange}
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="completed">Completed</option>
-                                    <option value="overdue">Overdue</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Description / Notes</label>
-                            <textarea
-                                name="description"
-                                value={formData.description}
-                                onChange={handleChange}
-                                placeholder="Add any notes about this loan..."
-                                rows="4"
-                            />
                         </div>
                     </div>
 

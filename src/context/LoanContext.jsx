@@ -584,6 +584,27 @@ export const LoanProvider = ({ children }) => {
         if (!user) return { success: false, error: 'User not authenticated' };
         setLoading(true);
         try {
+            // First, locate the loan to enforce role-based rules
+            const existingLoan = loans.find(l => l.id === loanId);
+            if (!existingLoan) throw new Error('Loan not found');
+
+            const isLender = existingLoan.type === 'lent';
+            const keysToUpdate = Object.keys(updatedData).filter(key => updatedData[key] !== undefined);
+
+            // Enforce Strict Backend Constraints:
+            // 1. Block any update trying to change core restricted fields
+            const restrictedFields = ['amount', 'amountPaid', 'borrowerName', 'borrowerEmail', 'lenderName', 'lenderEmail', 'repaymentSchedule', 'type'];
+            const hasRestrictedEdits = keysToUpdate.some(key => restrictedFields.includes(key));
+            if (hasRestrictedEdits) {
+                throw new Error('Security Error: Core financial fields cannot be modified after creation.');
+            }
+
+            // 2. Prevent non-lenders from editing terms
+            const isEditingTerms = keysToUpdate.includes('interestRate') || keysToUpdate.includes('dueDate');
+            if (isEditingTerms && !isLender) {
+                throw new Error('Permission Error: Only the lender can modify the interest rate and due date.');
+            }
+
             const updateObj = {};
             if (updatedData.amount !== undefined) updateObj.amount = updatedData.amount;
             if (updatedData.interestRate !== undefined) updateObj.interest_rate = updatedData.interestRate;

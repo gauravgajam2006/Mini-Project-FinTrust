@@ -11,7 +11,7 @@ import './LoanDetails.css';
 const LoanDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user, loans, deleteLoan, updateLoan, addRepayment, getLoanDetails, getRepaymentsByLoan, calculateOutstandingAmount } = useLoan();
+    const { user, loans, loading, deleteLoan, updateLoan, addRepayment, getLoanDetails, getRepaymentsByLoan, calculateOutstandingAmount } = useLoan();
     const [showApprovalWarning, setShowApprovalWarning] = useState(false);
     const [showPaymentForm, setShowPaymentForm] = useState(false);
 
@@ -24,10 +24,10 @@ const LoanDetails = () => {
     const isCompleted = loan ? remaining < 1 : false;
 
     useEffect(() => {
-        if (!loan) {
+        if (!loading && !loan) {
             navigate('/loans');
         }
-    }, [loan, navigate]);
+    }, [loan, loading, navigate]);
 
     const handleAddPayment = async (paymentData) => {
         console.log("PAYMENT DATA SENT:", paymentData);
@@ -59,11 +59,13 @@ const LoanDetails = () => {
         await updateLoan(id, { status: 'rejected' });
     };
 
-    if (!loan || !user) return <LoadingSpinner />;
+    if (loading || !user) return <LoadingSpinner />;
+    if (!loan) return <LoadingSpinner />; // Additional safety
 
     const personName = loan.type === 'lent' ? loan.borrowerName : loan.lenderName;
     const isReceiver = loan.created_by !== user.id; // Did someone else create this?
     const isBorrower = loan.type === 'borrowed';
+    const isLender = loan.type === 'lent';
     const daysRemaining = getDaysUntilDue(loan.dueDate);
     const progress = (loan.amountPaid / loan.amount) * 100;
 
@@ -100,7 +102,12 @@ const LoanDetails = () => {
                             📨 Remind
                         </button>
                     )}
-                    {loan.user_id === user.id && (
+                    {loan.user_id === user.id && isLender && (
+                        <Link to={`/loan/${id}/edit`} className="btn-primary">
+                            ✏️ Edit
+                        </Link>
+                    )}
+                    {isBorrower && (
                         <span style={{ color: 'var(--color-text-medium)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'var(--color-surface)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
                             👁️ View details only
                         </span>
