@@ -242,8 +242,10 @@ const CreateLoan = () => {
     return (
         <div className="create-loan">
             <div className="page-header">
-                <h1>➕ Create New Loan</h1>
-                <p>Add a new loan to track between friends or family</p>
+                <div>
+                    <h1>➕ Create New Loan</h1>
+                    <p>Add a new loan to track between friends or family</p>
+                </div>
             </div>
 
             <div className="loan-form-card">

@@ -71,11 +71,37 @@ const UpdateLoan = () => {
 
     return (
         <div className="create-loan">
-            <div className="page-header">
-                <h1>✏️ Edit Loan Terms</h1>
-                <p>Modify specific loan conditions</p>
-                <div style={{ padding: '1rem', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #F59E0B', borderRadius: '8px', marginTop: '1rem', color: '#B45309' }}>
-                    <strong>Note:</strong> Due to security and finality rules, lenders can only modify the Interest Rate and the Due Date.
+            <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '2rem', marginBottom: '2.5rem' }}>
+                <div style={{ flex: '1', minWidth: '300px' }}>
+                    <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                        <span>✏️</span> Edit Loan Terms
+                    </h1>
+                    <p style={{ color: 'var(--color-text-medium)', fontSize: '1.1rem' }}>
+                        Modify specific loan conditions
+                    </p>
+                </div>
+
+                <div style={{ 
+                    flex: '1', 
+                    minWidth: '300px', 
+                    maxWidth: '500px',
+                    padding: '1.25rem', 
+                    background: 'rgba(245, 158, 11, 0.05)', 
+                    border: '1px solid rgba(245, 158, 11, 0.2)', 
+                    borderLeft: '4px solid #F59E0B',
+                    borderRadius: '12px', 
+                    color: '#B45309',
+                    fontSize: '0.95rem',
+                    lineHeight: '1.5',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.05)'
+                }}>
+                    <div style={{ display: 'flex', gap: '0.75rem' }}>
+                        <span style={{ fontSize: '1.2rem' }}>💡</span>
+                        <div>
+                            <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Security Rule:</strong>
+                            Lenders can only modify the <strong>Interest Rate</strong> and the <strong>Due Date</strong> for existing loans.
+                        </div>
+                    </div>
                 </div>
             </div>
 
