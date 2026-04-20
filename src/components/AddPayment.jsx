@@ -7,15 +7,12 @@ const AddPayment = ({ loanId, outstandingAmount, onPaymentAdded, onCancel }) => 
     const [formData, setFormData] = useState({
         amount: '',
         date: new Date().toISOString().split('T')[0], // Today's date
-        method: 'Bank Transfer',
         note: ''
     });
 
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showGateway, setShowGateway] = useState(false);
-
-    const paymentMethods = ['Bank Transfer', 'UPI', 'Check', 'Other'];
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -67,7 +64,6 @@ const AddPayment = ({ loanId, outstandingAmount, onPaymentAdded, onCancel }) => 
             setFormData({
                 amount: '',
                 date: new Date().toISOString().split('T')[0],
-                method: 'Bank Transfer',
                 note: ''
             });
             setErrors({});
@@ -118,18 +114,7 @@ const AddPayment = ({ loanId, outstandingAmount, onPaymentAdded, onCancel }) => 
                     </div>
                 </div>
 
-                <div className="form-group">
-                    <label>Payment Method *</label>
-                    <select
-                        name="method"
-                        value={formData.method}
-                        onChange={handleChange}
-                    >
-                        {paymentMethods.map(method => (
-                            <option key={method} value={method}>{method}</option>
-                        ))}
-                    </select>
-                </div>
+
 
                 <div className="form-group">
                     <label>Note (Optional)</label>
