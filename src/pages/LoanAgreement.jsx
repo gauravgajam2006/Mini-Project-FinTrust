@@ -17,6 +17,7 @@ import {
   updateAgreement,
 } from '../utils/agreementUtils';
 import RiskScoreDisplay from '../components/RiskScoreDisplay';
+import WarningModal from '../components/WarningModal';
 import toast from 'react-hot-toast';
 import './LoanAgreement.css';
 
@@ -45,6 +46,7 @@ const LoanAgreement = () => {
   const [lenderSigningId, setLenderSigningId] = useState(null);
   const [lenderSignature, setLenderSignature] = useState(null);
   const [riskAssessment, setRiskAssessment] = useState(null);
+  const [showWarningModal, setShowWarningModal] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -300,6 +302,7 @@ const LoanAgreement = () => {
   };
 
   const handleLenderConfirmApprove = async () => {
+    setShowWarningModal(false);
     if (!lenderSignature) {
       toast.error('Please provide your signature to approve');
       return;
@@ -862,7 +865,7 @@ const LoanAgreement = () => {
                   <div className="detail-actions">
                     <button 
                       className="btn-primary" 
-                      onClick={handleLenderConfirmApprove}
+                      onClick={() => setShowWarningModal(true)}
                       disabled={isGeneratingPDF || !lenderSignature}
                       style={{ width: '100%' }}
                     >
@@ -1015,6 +1018,13 @@ const LoanAgreement = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <WarningModal 
+        isOpen={showWarningModal}
+        title="Approve Loan Agreement?"
+        message="This action is irreversible. Once approved, the agreement becomes active and the terms are strictly bound."
+        onConfirm={handleLenderConfirmApprove}
+        onCancel={() => setShowWarningModal(false)}
+      />
     </div>
   );
 };

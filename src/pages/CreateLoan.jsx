@@ -5,6 +5,7 @@ import { useLoan } from '../context/LoanContext';
 import { validateLoanData } from '../utils/loanValidation';
 import { supabase } from '../supabase';
 import toast from 'react-hot-toast';
+import WarningModal from '../components/WarningModal';
 import './CreateLoan.css';
 
 const CreateLoan = () => {
@@ -31,6 +32,10 @@ const CreateLoan = () => {
     const [foreignAmount, setForeignAmount] = useState('');
     const [profiles, setProfiles] = useState([]);
     const [isEmailReadOnly, setIsEmailReadOnly] = useState(false);
+    
+    // Warning Modal State
+    const [showWarningModal, setShowWarningModal] = useState(false);
+    const [pendingLoanData, setPendingLoanData] = useState(null);
 
     useEffect(() => {
         const fetchProfiles = async () => {
@@ -212,16 +217,25 @@ const CreateLoan = () => {
             return;
         }
 
+        setPendingLoanData(loanData);
+        setShowWarningModal(true);
+    };
+
+    const confirmCreateLoan = async () => {
+        if (!pendingLoanData) return;
+        
         setIsSubmitting(true);
-        const result = await createLoan(loanData);
+        const result = await createLoan(pendingLoanData);
 
         if (result.success) {
             toast.success('Loan created successfully!');
+            setShowWarningModal(false);
             navigate('/loans');
         } else {
             console.error('Failed to create loan:', result.error);
             toast.error('Failed to create loan: ' + result.error);
             setIsSubmitting(false);
+            setShowWarningModal(false);
         }
     };
 
@@ -492,6 +506,15 @@ const CreateLoan = () => {
                     </div>
                 </form>
             </div>
+            
+            <WarningModal 
+                isOpen={showWarningModal}
+                title="Create Irreversible Loan?"
+                message="This action is irreversible. Once created, the loan cannot be edited or deleted."
+                onConfirm={confirmCreateLoan}
+                onCancel={() => setShowWarningModal(false)}
+                isSubmitting={isSubmitting}
+            />
         </div>
     );
 };

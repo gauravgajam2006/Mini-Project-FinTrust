@@ -5,13 +5,14 @@ import { useLoan } from '../context/LoanContext';
 import { formatCurrency, formatDate, getDaysUntilDue } from '../utils/loanValidation';
 import AddPayment from '../components/AddPayment';
 import LoadingSpinner from '../components/LoadingSpinner';
+import WarningModal from '../components/WarningModal';
 import './LoanDetails.css';
 
 const LoanDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
     const { user, loans, deleteLoan, updateLoan, addRepayment, getLoanDetails, getRepaymentsByLoan, calculateOutstandingAmount } = useLoan();
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showApprovalWarning, setShowApprovalWarning] = useState(false);
     const [showPaymentForm, setShowPaymentForm] = useState(false);
 
     // Reactively compute loan data from context state
@@ -23,10 +24,10 @@ const LoanDetails = () => {
     const isCompleted = loan ? remaining < 1 : false;
 
     useEffect(() => {
-        if (!loan && !showDeleteModal) {
+        if (!loan) {
             navigate('/loans');
         }
-    }, [loan, navigate, showDeleteModal]);
+    }, [loan, navigate]);
 
     const handleAddPayment = async (paymentData) => {
         console.log("PAYMENT DATA SENT:", paymentData);
@@ -51,6 +52,7 @@ const LoanDetails = () => {
 
     const handleApprove = async () => {
         await updateLoan(id, { status: 'active' });
+        setShowApprovalWarning(false);
     };
 
     const handleReject = async () => {
@@ -74,7 +76,7 @@ const LoanDetails = () => {
                 <div className="header-actions">
                     {loan.status === 'pending_approval' && isReceiver && (
                         <>
-                            <button onClick={handleApprove} className="btn-primary" style={{ marginRight: '0.5rem', background: '#10B981', borderColor: '#10B981' }}>
+                            <button onClick={() => setShowApprovalWarning(true)} className="btn-primary" style={{ marginRight: '0.5rem', background: '#10B981', borderColor: '#10B981' }}>
                                 ✅ Approve Loan
                             </button>
                             <button onClick={handleReject} className="btn-secondary" style={{ marginRight: '0.5rem', color: '#EF4444', borderColor: '#EF4444' }}>
@@ -99,14 +101,9 @@ const LoanDetails = () => {
                         </button>
                     )}
                     {loan.user_id === user.id && (
-                        <Link to={`/loan/${id}/edit`} className="btn-primary">
-                            ✏️ Edit
-                        </Link>
-                    )}
-                    {loan.user_id === user.id && (
-                        <button onClick={() => setShowDeleteModal(true)} className="btn-danger">
-                            🗑️ Delete
-                        </button>
+                        <span style={{ color: 'var(--color-text-medium)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', background: 'var(--color-surface)', padding: '0.5rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+                            👁️ View details only
+                        </span>
                     )}
                 </div>
             </div>
@@ -296,31 +293,14 @@ const LoanDetails = () => {
                 </div>
             </div>
 
-            {/* Delete Modal */}
-            {showDeleteModal && createPortal(
-                <div className="modal-overlay fade-in" onClick={() => setShowDeleteModal(false)}>
-                    <div className="modal-content scale-in premium-modal" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-warning-icon">
-                            ⚠️
-                        </div>
-                        <h3>Delete Loan Record?</h3>
-                        <p className="modal-warning-text">
-                            Are you absolutely sure you want to delete this loan? 
-                            <br/><br/>
-                            <strong style={{ color: '#EF4444' }}>This action is permanent and cannot be undone.</strong> All associated payment history will also be removed.
-                        </p>
-                        <div className="modal-actions">
-                            <button onClick={() => setShowDeleteModal(false)} className="btn-secondary modal-btn cancel-btn">
-                                Cancel
-                            </button>
-                            <button onClick={handleDelete} className="btn-danger modal-btn confirm-btn">
-                                Yes, Delete It
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
-            )}
+            {/* Approval Warning Modal */}
+            <WarningModal 
+                isOpen={showApprovalWarning}
+                title="Approve Loan Agreement?"
+                message="This action is irreversible. Once approved, the loan becomes active and cannot be edited or deleted."
+                onConfirm={handleApprove}
+                onCancel={() => setShowApprovalWarning(false)}
+            />
         </div>
     );
 };
